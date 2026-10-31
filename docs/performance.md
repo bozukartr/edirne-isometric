@@ -1,3 +1,25 @@
+# Performance and verification
+
+## Current version 3
+
+Version 3 streams real aerial imagery and draws photo-textured buildings with a custom MapLibre WebGL 2 layer. Its performance profile differs from the v2 pre-rendered illustration. The measurements below describe **v1 and v2 only**; they are not v3 timings.
+
+The 3D build contains 611 spatial chunks and 708,630 vertices in a 1,833,729-byte gzip (8,503,560 bytes decompressed). Geometry is triangulated and quantized offline. The runtime limits active chunks to 28 on desktop, 16 on mobile, and 12 in low quality. Up to four chunk texture jobs and six image requests run at once. GPU uploads happen inside the custom render callback, at most two per frame. Stale chunks are released, and obsolete completed textures are discarded. There is no recurring animation loop requested by the building layer while idle.
+
+Ground imagery is managed by MapLibre. The WebGL-free fallback uses DOM satellite tiles, bounded tile retention, throttled tile selection, and compositor camera transforms. It does not import MapLibre or download building geometry. Both modes require a network connection for imagery.
+
+### Verification
+
+- 19 tests passed, including full mesh buffer validation and projection/tile/matrix checks.
+- Application and 3D module JavaScript syntax checks passed.
+- GLSL ES 300 shaders compiled and linked using Mesa EGL / llvmpipe.
+- Chrome desktop and 390 × 844 mobile fallback checks passed for actual aerial imagery, Turkish search, place cards, navigation, and native imagery resolution limits.
+- The cloud browser exposes neither WebGL nor WebGL 2. **The actual browser 3D composition, texture registration, camera behavior, and GPU frame rate remain visually unverified.** Shader compilation alone does not establish those results. No v3 FPS or device-performance claim is made.
+
+The native World Imagery source is capped at zoom 18 after a browser check showed unavailable-data placeholders at level 19 around the city center. Higher camera zoom magnifies the available images.
+
+---
+
 # Performance: v1 → v2
 
 ## Root cause

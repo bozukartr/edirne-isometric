@@ -1,20 +1,23 @@
 {
   "name": "edirne-isometric",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "private": true,
-  "description": "An interactive isometric atlas of Edirne/Merkez, built with HTML, CSS and JavaScript.",
+  "description": "An aerial map of Edirne with live satellite imagery and photo-textured 3D buildings.",
   "scripts": {
     "start": "node scripts/serve.mjs",
     "test": "node --test tests/*.test.cjs",
-    "check": "node --check dist/app.js && node --check dist/geometry.js && node --test tests/*.test.cjs",
+    "check": "node --check dist/app.js && node --check dist/map-engine.mjs && node --check dist/photo-buildings.mjs && node --check dist/satellite-core.js && node --test tests/*.test.cjs",
     "pages": "node scripts/prepare-pages.mjs",
     "atlas": "node scripts/build-atlas.cjs",
-    "dev": "node scripts/serve.mjs"
+    "dev": "node scripts/serve.mjs",
+    "scene3d": "node scripts/build-scene3d.cjs"
   },
   "engines": {
     "node": ">=20"
   },
   "devDependencies": {
-    "@napi-rs/canvas": "0.1.100"
+    "@napi-rs/canvas": "0.1.100",
+    "earcut": "^3.0.2",
+    "maplibre-gl": "^6.16.0"
   }
 }

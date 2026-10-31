@@ -22,13 +22,22 @@ The OSM compiler joins available multipolygon outer rings, clips to the stated b
 
 The source contains machine-detected footprints, rather than surveyed cadastral records. Outlines can have errors or omissions. Buildings with confidence below 0.7 are excluded. An additional footprint is skipped when its bounding-box overlap exceeds 35% of the smaller bounding-box area of an OSM building. OSM geometry is retained in preference to overlapping machine-detected footprints.
 
-The combined derivative database in `map.js` contains **16,563 buildings** and is distributed under **ODbL 1.0**, with the Microsoft source notice and its original CDLA license retained. The browser does not download `map.js`; the offline renderer uses it to prepare the published WebP map pyramid.
+The combined derivative database in `map.js` contains **16,563 buildings** and is distributed under **ODbL 1.0**, with the Microsoft source notice and its original CDLA license retained. The browser does not download `map.js`; the offline 3D compiler uses it to prepare the geometry in `../scene3d/`. Compiled geometry retains the source database licenses. The original v2 WebP pyramid remains as an unused archive.
 
 ## Interpretation
 
-Building heights come from source tags where available; the remainder are deterministic estimates. Vertical scale is emphasized. Roof materials, colors, facade windows, shadows, and tree positions are illustrative. Trees are seeded within mapped green polygons. River centerlines are sourced, but widths are stylized when no closed water polygon is available. Terrain is flat. Custom landmark models are architectural interpretations, not surveyed 3D models.
+Building heights come from source tags where available; the remainder are deterministic estimates. Version 3 uses physical meter heights without the v2 vertical exaggeration. Facades and windows are procedural approximations. Three major mosques have simplified architectural models rather than surveyed geometry. Terrain is flat. Footprint dates and image capture dates can differ, and registration errors can produce visible mismatches.
 
-The rendered images in `../atlas/` are produced from these sources by the original renderer in `scripts/lib/render-scene.cjs`. They contain no copied imagery from Isometric Istanbul or Isometric NYC.
+## Live aerial imagery
+
+Ground imagery, roof textures, thumbnails, and the minimap are fetched live from the public Esri World Imagery service. Attribution: **Source: Esri, Vantor, Earthstar Geographics, and the GIS User Community**.
+
+- Item and applicable terms: https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9
+- Service: https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer
+
+Imagery is third-party copyrighted material, not part of the open building database or the repository license. No satellite tiles or roof photos are bundled, bulk downloaded, or cached for offline use. Normal browser and in-memory texture caching is used while viewing the map. The README screenshot is a map representation with visible attribution. Availability, capture dates, and resolution depend on the provider. The imagery is capped at native zoom 18 because higher levels return unavailable-data placeholders in this area.
+
+The older illustrative images in `../atlas/` were produced from open geometry by `scripts/lib/render-scene.cjs`; they contain no satellite or reference-site imagery and are not requested by the current application.
 
 ## Landmarks
 
@@ -48,7 +57,7 @@ Coordinates were checked against OSM geometry and the Edirne Provincial Director
 
 1. `python3 scripts/prepare-data.py` — refresh OSM-only data.
 2. `python3 scripts/import-microsoft-buildings.py` — merge the pinned Microsoft extract.
-3. `npm install` then `npm run atlas` — render map tiles and thumbnails offline.
+3. `npm install` then `npm run scene3d` — compile and quantize the 3D building mesh offline.
 4. `npm run pages` — update the root HTML entry.
 
-The existing source database and all rendered tiles are committed, so ordinary use and deployment need no data downloads or image-building step.
+The source database, compiled building geometry, and vendored rendering engine are committed, so deployment needs no build step. The application streams satellite imagery from Esri while in use.

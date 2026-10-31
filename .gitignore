@@ -10,3 +10,5 @@ dist/_qa.html
 dist/_baseline/
 dist/_qa.html
 .openai/
+
+dist/_qa/

@@ -1,16 +1,20 @@
 # Isometric Edirne
 
-A full-screen, interactive isometric map of **Edirne / Merkez**, inspired by [Isometric Istanbul](https://isometricistanbul.com/) and [Isometric NYC](https://isometric.nyc/). Plain HTML, CSS, and JavaScript; original map rendering and landmark models.
+An interactive aerial map of **Edirne / Merkez**, inspired by [Isometric Istanbul](https://isometricistanbul.com/) and [Isometric NYC](https://isometric.nyc/). HTML, CSS, and JavaScript, with locally vendored MapLibre GL JS.
 
 **[Open the map](https://bozukartr.github.io/edirne-isometric/)**
 
-![Isometric Edirne preview](docs/preview.jpg)
+![Live satellite view in the 2D browser fallback](docs/preview.jpg)
 
-## Version 2
+*Screenshot: the actual satellite fallback. The QA browser has WebGL disabled.*
 
-The viewer now uses a pre-rendered, four-level **WebP tile pyramid**, rather than redrawing city geometry on every frame. Dragging and zooming update a compositor transform. Only visible image regions are requested, and there is no animation loop when the map is idle.
+## Version 3: aerial photography and 3D buildings
 
-The map now includes **16,563 building footprints**: 2,904 from OpenStreetMap and 13,659 additional Microsoft open-building footprints after overlap filtering. Roofs, facades, windows, shadows, trees, and landmark models are rendered offline. A compact dark interface leaves the map visible, with search at the top, landmark thumbnails at the bottom, and an interactive minimap.
+The default view uses **live Esri World Imagery** on the ground and geographically aligned aerial photo textures on building roofs. A custom WebGL 2 layer draws nearby buildings, including simplified domes and minarets for Selimiye, Üç Şerefeli, and Eski Cami. The camera can tilt and rotate. The compact dark interface provides Turkish search, 12 landmarks, place cards, a minimap, lighting, and quality settings.
+
+This is an approximate, photo-textured **2.5D reconstruction**. Footprints come from OpenStreetMap and Microsoft; some heights are estimates. Facades and monument geometry are procedural approximations, and terrain is flat. It is not a photogrammetric city scan. Imagery dates, registration, resolution, and building footprints may differ.
+
+**WebGL 2 and DecompressionStream are required for 3D.** Unsupported browsers automatically use a functional **2D satellite map**. The fallback does not download the 3D engine or building geometry. Internet access is required for imagery in both modes. Available native imagery is capped at zoom 18 to avoid the provider's “map data not yet available” tiles at higher levels in this area. Further zoom magnifies the available imagery.
 
 ## Run
 
@@ -18,7 +22,7 @@ The map now includes **16,563 building footprints**: 2,904 from OpenStreetMap an
 npm start
 ```
 
-Open **http://localhost:5173**. No dependencies or API keys are needed to serve the included map. Alternatively:
+Open **http://localhost:5173**. Serving the committed application requires no package installation or API key. Third-party imagery is streamed from the public World Imagery service. Alternatively:
 
 ```sh
 python3 -m http.server 5173 --directory dist
@@ -26,77 +30,58 @@ python3 -m http.server 5173 --directory dist
 
 ## Controls
 
-- Drag to pan; scroll, double-click, pinch, or use **+ / −** to zoom.
-- Search Turkish place names with or without accents: `uc serefeli` and `karaagac` work.
-- Select a landmark thumbnail or a map marker to view its details.
-- Click the minimap to move to another part of the city.
-- Settings: day/evening light, markers, neighborhood labels, and automatic/low/high detail.
-- Share copies a link to the selected landmark or the current map view.
-- Keyboard: arrows pan, Shift + arrows pan farther, + / − zoom, R resets, / searches, and Escape closes panels.
-- The interface and place descriptions are in Turkish. Reduced-motion preferences are respected.
+- Drag to move; scroll, double-click, pinch, or use **+ / −** to zoom.
+- In 3D, right-drag or Ctrl-drag to rotate and tilt; use the north button to reset bearing.
+- Settings: **Uydu / 3D**, camera pitch, day/evening, markers, neighborhood names, and quality.
+- Search Turkish names with or without accents: `uc serefeli`, `karaagac`.
+- Click a landmark thumbnail or marker to open its details.
+- Click the minimap to move across the city.
+- Share copies the selected place or camera position, zoom, pitch, and bearing.
+- Keyboard: arrows move, Shift + arrows move farther, + / − zoom, R resets, / searches, Escape closes panels.
+- Reduced-motion preferences are respected.
 
-## Data and visual interpretation
+## Geometry and performance
 
-Coverage: **26.511–26.595° E, 41.646–41.700° N**. This is the urban area of Merkez, Sarayiçi, Yeniimaret, and Karaağaç, rather than the entire rural district.
+The source database contains **16,563 building footprints**: 2,904 OSM footprints and 13,659 additional Microsoft footprints after overlap filtering. The compiler replaces overlapping landmark geometry with three approximate mosque models, producing 16,559 model entries across 611 spatial chunks.
 
-- Roads, waterways, land use, and original buildings: **© OpenStreetMap contributors**, ODbL 1.0; downloaded 2026-10-31.
-- Additional building footprints: **Microsoft GlobalMLBuildingFootprints**, CDLA Permissive 2.0; 2026-08-13 dataset.
-- OSM footprints take precedence where a Microsoft footprint substantially overlaps one.
-- Some heights are sourced; the remainder are deterministic estimates. Vertical scale is emphasized for legibility. Roof materials, colors, windows, and trees are illustrative. Landmark models are simplified architectural interpretations. Terrain is flat; river widths are stylized where only centerlines are available.
+Buildings are triangulated and quantized offline into a **1.83 MB gzip** buffer (8.50 MB decompressed, 708,630 vertices). The browser only uploads nearby chunks to the GPU: up to 28 on desktop, 16 on mobile, or 12 at low quality. At most four chunk texture jobs and six imagery requests run concurrently. Uploads are limited to two chunks per frame. No geometry triangulation runs during interaction, and the custom layer does not request animation frames while idle.
 
-See [data provenance and licenses](dist/data/README.md). The combined derivative database in `dist/data/map.js` is distributed under ODbL 1.0, retaining the Microsoft source notice and license. No reference-site imagery or code was copied.
+MapLibre also streams the visible ground imagery. The 2D fallback moves tiled images with a compositor transform and performs no building rendering. Device performance and network speed still affect responsiveness. No FPS claim is made.
 
-## Rebuild the map images
+## Data and imagery
 
-The pre-rendered tiles are committed, so deployment needs no build step. To regenerate them after editing geometry or rendering:
+Building coverage: **26.511–26.595° E, 41.646–41.700° N**, covering the urban center, Sarayiçi, Yeniimaret, and Karaağaç.
+
+- Building footprints: **© OpenStreetMap contributors**, ODbL 1.0; snapshot 2026-10-31.
+- Additional footprints: **Microsoft GlobalMLBuildingFootprints**, CDLA Permissive 2.0; snapshot 2026-08-13.
+- Live imagery: **Source: Esri, Vantor, Earthstar Geographics, and the GIS User Community**. See the [World Imagery item and applicable terms](https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9).
+- MapLibre GL JS 6.16.0: BSD 3-Clause, license included in `dist/vendor/maplibre/LICENSE.txt`.
+
+The source database and compiled geometry are distributed under ODbL 1.0 with the Microsoft notice and license retained. **Satellite imagery is not bundled or licensed by this repository**; it is fetched live and remains subject to the provider's terms. Do not use this repository as permission to export, bulk download, or redistribute the imagery. The application has no offline imagery cache. Provider availability and terms may change. See [data provenance](dist/data/README.md).
+
+No reference-site imagery or code was copied. The older illustrative WebP pyramid remains in `dist/atlas/` as a v2 archive and is not loaded by the current application.
+
+## Rebuild
 
 ```sh
 npm install
-npm run atlas
+npm run scene3d
 npm run pages
+npm run check
 ```
 
-Only the offline image builder uses `@napi-rs/canvas`. It is not shipped to or run in the browser. The builder produces 116 WebP tiles at 0.25, 0.5, 1, and 2 pixels per meter, an overview, and 12 landmark thumbnails.
+`earcut` triangulates footprints during the offline build. MapLibre's published runtime modules and stylesheet are already vendored. To refresh data, run `python3 scripts/prepare-data.py`, then `python3 scripts/import-microsoft-buildings.py`, and rebuild the scene. The original v2 renderer is retained as `npm run atlas`.
 
-To refresh the OSM source, run `python3 scripts/prepare-data.py`. This replaces the combined snapshot with OSM-only data; then run `python3 scripts/import-microsoft-buildings.py` to merge the pinned Microsoft extract again, followed by `npm run atlas` and `npm run pages`.
+## Validation and limits
 
-## Verify
+Nineteen tests cover source bounds, Turkish search normalization, geographic projections, satellite tile coordinates and preview bounds, matrix precision, chunk offsets, every mesh vertex's height/material/normal, vendored dependencies, HTML resources, and the archived v2 pyramid. Syntax checks cover the application and both 3D modules.
 
-```sh
-npm test
-```
+The actual satellite fallback was checked in Chrome on desktop and a **390 × 844** mobile viewport, including search, details, zoom, and imagery loading. The GLSL ES 300 shaders compiled and linked successfully using Mesa EGL / llvmpipe; the optional check is `python3 scripts/qa/verify-shaders.py` with `moderngl==5.12.0` installed.
 
-Twelve tests cover projections, pointer-anchored zoom, Turkish name search, geographic bounds, source counts, tile selection, resolution selection, the complete pyramid, thumbnails, and both HTML entry points. Desktop and 390 × 844 mobile layouts were checked in Chrome for navigation, search, place details, themes, and settings.
+**End-to-end 3D visual appearance and GPU frame rate could not be verified in the cloud browser because WebGL is disabled there.** Offscreen shader compilation is not a substitute for browser GPU testing. A WebGL 2 capable browser is needed to assess the tilted model view. [Performance notes and previous measurements](docs/performance.md).
 
-[Performance comparison and limitations](docs/performance.md)
+## GitHub Pages
 
-## Publish
+Publication is configured as **Deploy from a branch → `main` → `/ (root)`**. The generated root `index.html` loads assets from `dist/`; `.nojekyll` bypasses Jekyll. Changes on `main` publish automatically. Run `npm run pages` after editing `dist/index.html`.
 
-GitHub Pages is configured as **Deploy from a branch → `main` → `/ (root)`**. The root `index.html` loads assets from `dist/`; `.nojekyll` bypasses Jekyll. Pushes to `main` publish updates automatically.
-
-Run `npm run pages` after changing `dist/index.html`. Keep `dist/atlas/` in the repository: it contains the published map images. You can also upload `dist/` to any static host. The application needs no server, map API, font CDN, analytics, or login.
-
-## Structure
-
-```text
-index.html                 Generated GitHub Pages entry
-.nojekyll                  Static Pages publication
-dist/
-  index.html               Application shell
-  styles.css               Responsive dark map interface
-  app.js                   Tile lifecycle, compositor camera, UI
-  viewer-core.js           Pure tile/viewport math
-  geometry.js              Geographic projection and zoom math
-  atlas/                   Published WebP pyramid and thumbnails
-  data/                    Offline source database and place directory
-scripts/
-  build-atlas.cjs           Offline map image generation
-  lib/render-scene.cjs      Detailed geographic renderer
-  prepare-pages.mjs        Generate root HTML entry
-  prepare-data.py          Download and compile OSM data
-  import-microsoft-buildings.py
-  merge-buildings.py       Merge Microsoft footprints with OSM precedence
-  serve.mjs                Dependency-free local server
-tests/
-  atlas.test.cjs
-```
+`dist/` can also be served directly by a static host. Keep the vendored modules, `scene3d/`, and source attribution files with the application. There is no backend, analytics, login, or geolocation request.

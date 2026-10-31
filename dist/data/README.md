@@ -56,3 +56,7 @@ Coordinates were checked against OSM geometry and the Edirne Provincial Director
 6. `npm run pages` — update the root HTML entry.
 
 Ordinary use and deployment need no source downloads, generation call, or build step.
+
+## Active v5 illustration
+
+All published images now come from one whole-city master; independent regional redraws were removed because their geography did not align. This restores visual continuity between tiles, zoom levels and cards. It does not validate the generated master against real-world geography. Native resolution is 1672 × 941; there are five tiles and no generated higher-detail levels.

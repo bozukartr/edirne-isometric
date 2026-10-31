@@ -1,15 +1,16 @@
-/* Isometric Edirne v4. Illustrated image atlas + compositor transforms.
+/* Isometric Edirne v5. Illustrated image atlas + compositor transforms.
  * No city geometry, canvas drawing, or permanent animation loop on the main thread. */
 (function(){
 'use strict';
 const {geo,iso,normalize,clamp,zoomAt:baseZoomAt}=AtlasMath;
-const zoomAt=(c,f,x,y,o)=>baseZoomAt(c,clamp(c.zoom*f,.11,1.8)/c.zoom,x,y,o);
+const cameraLimits=()=>manifest?.camera||{minZoom:.09,maxZoom:.3674};
+const zoomAt=(c,f,x,y,o)=>baseZoomAt(c,clamp(c.zoom*f,cameraLimits().minZoom,cameraLimits().maxZoom)/c.zoom,x,y,o);
 const {levelFor,tileRange,worldView,constrain}=AtlasViewer;
 const $=id=>document.getElementById(id),viewport=$('viewport'),world=$('world');
-const assets=new URL('./atlas-v4/',document.currentScript.src),places=window.EDIRNE_PLACES;
+const assets=new URL('./atlas-v5/',document.currentScript.src),places=window.EDIRNE_PLACES;
 const initialHash=location.hash.slice(1),reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const mobile=()=>innerWidth<=760;
-let manifest=null,W=innerWidth,H=innerHeight,origin={x:W/2,y:H*.49},camera={x:0,y:0,zoom:.65};
+let manifest=null,W=innerWidth,H=innerHeight,origin={x:W/2,y:H*.49},camera={x:0,y:0,zoom:.15};
 let selected=null,category='all',query='',quality='auto',night=false,ready=false;
 let raf=0,animation=null,inertia=null,tileTimer=0,tileLevel=-1,tileGeneration=0;
 let markerVisible=true,labelVisible=false,filtered=places;
@@ -68,10 +69,10 @@ function updateMinimap(){if(!manifest)return;const b=manifest.bounds,v=currentVi
  el.style.width=`calc(${(v.right-v.left)/width*100}% - ${(v.right-v.left)/width*8}px)`;
  el.style.height=`calc(${(v.bottom-v.top)/height*100}% - ${(v.bottom-v.top)/height*8}px)`;
 }
-function updateScale(){const m=camera.zoom>1.4?50:camera.zoom>.45?100:500;$('scale-bar').style.width=m*camera.zoom+'px';$('scale-label').textContent=m+' m';$('zoom-in').disabled=camera.zoom>=1.8;$('zoom-out').disabled=camera.zoom<=.11;}
+function updateScale(){const m=camera.zoom>1.4?50:camera.zoom>.45?100:500;$('scale-bar').style.width=m*camera.zoom+'px';$('scale-label').textContent=m+' m';$('zoom-in').disabled=camera.zoom>=cameraLimits().maxZoom-.00001;$('zoom-out').disabled=camera.zoom<=cameraLimits().minZoom+.00001;}
 function fly(to,duration=650){inertia=null;animation=null;if(reduceMotion){camera=to;limitCamera();requestPaint();scheduleTiles(true);return;}animation={from:{...camera},to,start:performance.now(),duration};requestPaint();}
-function moveTo(point,z=1){fly({x:-point[0]*z,y:-point[1]*z,zoom:z});}
-function home(){const p=iso(...geo(26.5553,41.6763));closeDetail();moveTo(p,mobile()?.75:.65);}
+function moveTo(point,z=cameraLimits().maxZoom){z=clamp(z,cameraLimits().minZoom,cameraLimits().maxZoom);fly({x:-point[0]*z,y:-point[1]*z,zoom:z});}
+function home(){const p=iso(...geo(26.5553,41.6763));closeDetail();moveTo(p,mobile()?.24:Math.min(.15,W/9500));}
 function zoom(f,x=W/2,y=H/2){animation=null;inertia=null;camera=zoomAt(camera,f,x,y,origin);limitCamera();requestPaint();hideHint();}
 function toast(text){$('toast').textContent=text;$('toast').classList.add('visible');clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').classList.remove('visible'),2400);}
 function hideHint(){$('navigation-hint').style.opacity='0';}
@@ -102,7 +103,7 @@ function selectPlace(id,changeHash=true){
  const p=places.find(p=>p.id===id);if(!p||!ready)return;
  selected=id;$('detail').hidden=false;document.body.classList.add('has-detail');$('detail-title').textContent=p.name;$('detail-description').textContent=p.description;$('detail-era').textContent=p.era;$('detail-neighborhood').textContent=p.neighborhood;$('detail-type').textContent=categoryNames[p.category];$('detail-image').src=thumbnail(p);$('detail-image').alt=p.name+' izometrik görünümü';$('detail-osm').href=`https://www.openstreetmap.org/?mlat=${p.lat}&mlon=${p.lon}#map=18/${p.lat}/${p.lon}`;
  if(changeHash)history.replaceState(null,'','#'+id);searchOpen(false);filter();
- const z=p.kind==='bridge'?.95:p.kind==='tree'?.7:1.1;
+ const z=manifest.camera.placeZoom;
  const desiredX=mobile()?W*.5:W*.56,desiredY=mobile()?H*.31:H*.47;
  fly({zoom:z,x:desiredX-origin.x-p.projected[0]*z,y:desiredY-origin.y-p.projected[1]*z});
 }
@@ -110,7 +111,7 @@ function closeDetail(clearHash=true){selected=null;$('detail').hidden=true;docum
 async function share(){const url=new URL(location.href);if(!selected){const v=currentView();url.hash='view='+[camera.zoom.toFixed(3),((v.left+v.right)/2).toFixed(1),((v.top+v.bottom)/2).toFixed(1)].join(',');history.replaceState(null,'',url.href);}
  try{await navigator.clipboard.writeText(url.href);toast('Bağlantı kopyalandı. Biraz Edirne paylaş.');}catch{toast('Paylaşmak için adres çubuğundaki bağlantıyı kopyalayabilirsin.');}}
 function loadHash(){const id=decodeURIComponent(location.hash.slice(1));if(places.some(p=>p.id===id)){selectPlace(id,false);return;}
- if(id.startsWith('view=')){const a=id.slice(5).split(',').map(Number);if(a.length===3&&a.every(Number.isFinite)){const z=clamp(a[0],.11,1.8);camera={zoom:z,x:-a[1]*z,y:-a[2]*z};limitCamera();requestPaint();return;}}
+ if(id.startsWith('view=')){const a=id.slice(5).split(',').map(Number);if(a.length===3&&a.every(Number.isFinite)){const z=clamp(a[0],cameraLimits().minZoom,cameraLimits().maxZoom);camera={zoom:z,x:-a[1]*z,y:-a[2]*z};limitCamera();requestPaint();return;}}
  if(selected)closeDetail(false);
 }
 viewport.addEventListener('pointerdown',e=>{
@@ -151,7 +152,7 @@ window.addEventListener('hashchange',loadHash);window.addEventListener('resize',
 function benchmark(){
  const saved={...camera};animation=null;inertia=null;if(raf){cancelAnimationFrame(raf);raf=0;}
  metrics.updateTimes=[];
- for(let i=0;i<60;i++){camera={zoom:.65,x:saved.x+Math.sin(i*.12)*160,y:saved.y};paint(performance.now());}
+ for(let i=0;i<60;i++){camera={zoom:.15,x:saved.x+Math.sin(i*.12)*160,y:saved.y};paint(performance.now());}
  const times=metrics.updateTimes.slice(5).sort((a,b)=>a-b);
  const result={frames:times.length,p95Ms:times[Math.floor(times.length*.95)],medianMs:times[Math.floor(times.length*.5)],maxMs:Math.max(...times),tiles:tiles.size,geometryDrawsPerFrame:0,measurement:'synchronous main-thread update cost; not GPU frame time'};
  $('performance-report').textContent=JSON.stringify(result);viewport.dataset.benchmark='complete';camera=saved;requestPaint();
@@ -159,7 +160,7 @@ function benchmark(){
 async function init(){
  $('error').hidden=true;$('loading').hidden=false;
  try{
-  const response=await fetch(asset('manifest.json?v=4'));if(!response.ok)throw Error('manifest '+response.status);manifest=await response.json();viewport.style.background=manifest.background;
+  const response=await fetch(asset('manifest.json?v=5'));if(!response.ok)throw Error('manifest '+response.status);manifest=await response.json();viewport.style.background=manifest.background;
   const b=manifest.bounds,overview=$('overview');overview.src=asset(manifest.overview);overview.style.cssText=`left:${b.minX}px;top:${b.minY}px;width:${b.maxX-b.minX}px;height:${b.maxY-b.minY}px;`;$('minimap-image').src=overview.src;
   await overview.decode().catch(()=>{});buildPlaces();filter();ready=true;home();if(initialHash){history.replaceState(null,'','#'+initialHash);loadHash();}
   try{if(localStorage.getItem('edirne-light-v4')==='evening')light(true);}catch{}

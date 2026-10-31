@@ -8,7 +8,9 @@ A detailed, illustrated map of **Edirne / Merkez**, inspired by [Isometric Istan
 
 ## Illustrated city atlas
 
-The map is made from five original illustrations: a city overview, the historic center, Sarayiçi–Yeniimaret, Karaağaç–Meriç, and the eastern neighborhoods. Composition guides were rendered from the open road and building database, then restyled with built-in image generation. Region images are combined with soft overlap masks and packaged into **68 WebP tiles**, an overview, and 12 place thumbnails.
+The map uses **one whole-city master illustration**. Every zoom level, overview, minimap and all twelve place cards are deterministic crops of that same image. Independent regional redraws and overlap masks were removed because they changed streets, riverbanks and building scale across the joins.
+
+The master is 1672 × 941 pixels. The pyramid contains **5 WebP tiles**, without synthetic higher-resolution levels; zoom is capped at twice the native source density. This fixes regional visual discontinuities, but does not create additional architectural detail.
 
 The browser displays these ready-made pictures using ordinary HTML/CSS image layers. It requests only visible tiles and moves a compositor transform while dragging. There is no WebGL requirement, rotating camera, live 3D scene, external satellite service, map API key, or login. All runtime images are served from this repository.
 
@@ -56,16 +58,16 @@ npm run pages
 npm run check
 ```
 
-`npm run atlas` packages the committed source illustrations into the tile atlas; it makes no network requests. The packaging process reuses one tile-sized canvas and does not allocate a full-city raster. `@napi-rs/canvas` is only an offline build dependency.
+`npm run atlas` packages the single committed master illustration into the tile atlas; it makes no network requests. The packaging process reuses one tile-sized canvas and does not allocate a full-city raster. `@napi-rs/canvas` is only an offline build dependency.
 
-`npm run guides` recreates the open-data composition guides under `tmp/illustration-guides/`. Changing the source geometry requires redrawing/reviewing the corresponding illustrations before rebuilding the atlas. The committed region images keep ordinary rebuilds reproducible.
+`npm run guides` recreates the open-data composition guides under `tmp/illustration-guides/`. Changing the source geometry requires reviewing the whole-city master. Separate generated regional overlays must not be reintroduced.
 
 ## Verification
 
-Tests cover geographic projections, Turkish search, data bounds, source attribution, pointer-anchored zoom, tile selection and resolution, every published tile and thumbnail, illustration bounds, detailed coverage of all landmarks, and both HTML entry points. Desktop/mobile navigation and loading are checked in Chrome with WebGL unavailable. [Performance and verification notes](docs/performance.md).
+Tests cover geographic projections, Turkish search, data bounds, source attribution, pointer-anchored zoom, tile selection and resolution, every published tile and thumbnail, illustration bounds, one-master coverage of all landmarks and decoded-pixel comparisons of every tile and card against that master, and both HTML entry points. Desktop/mobile navigation and loading are checked in Chrome with WebGL unavailable. [Performance and verification notes](docs/performance.md).
 
 ## GitHub Pages
 
 Configured as **Deploy from a branch → `main` → `/ (root)`**. The generated root `index.html` loads assets from `dist/`; `.nojekyll` bypasses Jekyll. Run `npm run pages` after editing `dist/index.html`. Updates pushed to `main` publish automatically.
 
-`dist/` is also a complete static-hosting folder. Source region illustrations are in `assets/illustrations/`; the deployed application loads only the packaged files in `dist/atlas-v4/`.
+`dist/` is also a complete static-hosting folder. The source master illustration are in `assets/illustrations/`; the deployed application loads only the packaged files in `dist/atlas-v5/`.

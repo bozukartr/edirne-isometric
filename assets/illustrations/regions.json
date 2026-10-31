@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "regions": [
     {
       "id": "city-overview",
@@ -8,54 +8,6 @@
       "w": 9102,
       "h": 5119.875,
       "file": "city-overview.webp",
-      "pixels": [
-        1672,
-        941
-      ]
-    },
-    {
-      "id": "north",
-      "x": -2000,
-      "y": -1700,
-      "w": 3000,
-      "h": 1687.5,
-      "file": "north.webp",
-      "pixels": [
-        1672,
-        941
-      ]
-    },
-    {
-      "id": "south",
-      "x": -2200,
-      "y": 700,
-      "w": 3000,
-      "h": 1687.5,
-      "file": "south.webp",
-      "pixels": [
-        1672,
-        941
-      ]
-    },
-    {
-      "id": "east",
-      "x": 900,
-      "y": -600,
-      "w": 3000,
-      "h": 1687.5,
-      "file": "east.webp",
-      "pixels": [
-        1672,
-        941
-      ]
-    },
-    {
-      "id": "historic-center",
-      "x": -1300,
-      "y": -680,
-      "w": 2600,
-      "h": 1462.5,
-      "file": "historic-center.webp",
       "pixels": [
         1672,
         941

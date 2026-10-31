@@ -1,3 +1,7 @@
+# v5 consistency correction
+
+The active pyramid contains five tiles derived from one 1672 × 941 master. The viewer uses the same compositor-only interaction as v4. The v4 benchmark below is historical, not a new v5 frame-time measurement.
+
 # Illustrated atlas: performance and validation
 
 The current map uses a fixed-angle illustrated image pyramid. No city geometry or GPU map engine runs in the browser. Five original region illustrations are packaged offline into 68 WebP tiles at 0.125, 0.25, 0.5, and 1 pixel per projected world unit, plus an overview and place thumbnails.

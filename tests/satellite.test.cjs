@@ -40,3 +40,6 @@ test('3D vendor and module dependencies are present and source imagery is not bu
  assert.deepEqual(fs.readdirSync(path.join(root,'dist/scene3d')).sort(),['buildings.bin.gz','manifest.json']);
  const engine=fs.readFileSync(path.join(root,'dist/map-engine.mjs'),'utf8');assert.ok(engine.includes('maxzoom:18'));assert.ok(!engine.includes('maxzoom:20'));
 });
+test('local recovery image has valid geographic bounds and a real WebP payload',()=>{
+ const m=JSON.parse(fs.readFileSync(path.join(root,'dist/fallback/manifest.json'))),b=fs.readFileSync(path.join(root,'dist/fallback',m.image));assert.equal(b.toString('ascii',0,4),'RIFF');assert.equal(b.toString('ascii',8,12),'WEBP');assert.ok(m.width>=2000);assert.ok(m.height>1500);const nw=S.local(m.bbox[0],m.bbox[3]),se=S.local(m.bbox[2],m.bbox[1]);close(m.nw[0],nw[0]);close(m.nw[1],nw[1]);close(m.se[0],se[0]);close(m.se[1],se[1]);
+});

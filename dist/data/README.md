@@ -39,6 +39,10 @@ Imagery is third-party copyrighted material, not part of the open building datab
 
 The older illustrative images in `../atlas/` were produced from open geometry by `scripts/lib/render-scene.cjs`; they contain no satellite or reference-site imagery and are not requested by the current application.
 
+## Local recovery map
+
+`../fallback/map.webp` is an original flat plan view rendered only from the open road, water, land-use, and building database. It contains no satellite imagery. Its Web Mercator bounds are in `../fallback/manifest.json`. It is loaded when live imagery is unavailable, with visible OSM/Microsoft attribution and a notice identifying the recovery view. Rebuild with `npm run fallback`.
+
 ## Landmarks
 
 Coordinates were checked against OSM geometry and the Edirne Provincial Directorate of Culture and Tourism's place directory. Inconsistent directory coordinates (notably Eski Cami) were resolved using mapped geometry and corroborating coordinates. Descriptions are original Turkish summaries.

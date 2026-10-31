@@ -1,6 +1,12 @@
 # Performance and verification
 
-## Current version 3
+## Current version 3.1
+
+Startup now returns a working DOM-based 2D camera immediately. 3D is an independent, cancellable transition, initiated by the toolbar or `?mode=3d`. Engine imports and map readiness have unconditional deadlines. A startup failure keeps the 2D viewer alive; selecting 2D also destroys an active GPU map. A late result from a cancelled attempt is discarded.
+
+Image requests try both official Esri hosts with a deadline per attempt. If external imagery is unreachable, a locally generated 2400 × 2066 WebP plan-view map (515,790 bytes) keeps the city visible without a third-party tile request. A browser fixture deliberately used a missing imagery URL and verified this fallback with real DOM image decoding and display.
+
+## 3D rendering
 
 Version 3 streams real aerial imagery and draws photo-textured buildings with a custom MapLibre WebGL 2 layer. Its performance profile differs from the v2 pre-rendered illustration. The measurements below describe **v1 and v2 only**; they are not v3 timings.
 
@@ -10,7 +16,7 @@ Ground imagery is managed by MapLibre. The WebGL-free fallback uses DOM satellit
 
 ### Verification
 
-- 19 tests passed, including full mesh buffer validation and projection/tile/matrix checks.
+- 30 tests passed, covering full mesh validation, projections, deadlines, retry/cancellation, provider failover, and local recovery assets.
 - Application and 3D module JavaScript syntax checks passed.
 - GLSL ES 300 shaders compiled and linked using Mesa EGL / llvmpipe.
 - Chrome desktop and 390 × 844 mobile fallback checks passed for actual aerial imagery, Turkish search, place cards, navigation, and native imagery resolution limits.

@@ -1,55 +1,42 @@
 # Isometric Edirne
 
-A detailed, illustrated map of **Edirne / Merkez**, inspired by [Isometric Istanbul](https://isometricistanbul.com/) and [Isometric NYC](https://isometric.nyc/). Explore the city from one fixed isometric angle: drag to move, zoom into neighborhoods, and open the stories behind 12 landmarks.
+**[Open the map](https://bozukartr.github.io/edirne-isometric/)** · Public GitHub Pages, `main` → `/ (root)`.
 
-**[Open the map](https://bozukartr.github.io/edirne-isometric/)**
+An interactive, fixed-angle view of **Edirne / Merkez** with real satellite/aerial imagery. Inspired by the exploration interface of [Isometric Istanbul](https://isometricistanbul.com/) and [Isometric NYC](https://isometric.nyc/).
 
 ![Isometric Edirne](docs/preview.jpg)
 
-## Illustrated city atlas
+## Geographic consistency
 
-The map uses **one whole-city master illustration**. Every zoom level, overview, minimap and all twelve place cards are deterministic crops of that same image. Independent regional redraws and overlap masks were removed because they changed streets, riverbanks and building scale across the joins.
+The city is **not redrawn by image generation**. The map displays original Esri World Imagery tiles with one mathematical Web Mercator → fixed isometric affine transform. Streets, riverbanks, parcels and roof pixels remain at their source positions. All twelve place markers use the same projection, without fabricated building-height offsets. Cards use imagery centered on the same geographic coordinates and the same display angle.
 
-The master is 1672 × 941 pixels. The pyramid contains **5 WebP tiles**, without synthetic higher-resolution levels; zoom is capped at twice the native source density. This fixes regional visual discontinuities, but does not create additional architectural detail.
+No photogrammetric building meshes, invented facades, inferred heights, generated roof details or synthetic neighborhoods are displayed. This is a tilted aerial image, not a claim to measured 3D buildings. Source image dates, ground resolution, orthorectification and positional error are controlled by the imagery provider; real-world surveying accuracy is not guaranteed.
 
-The browser displays these ready-made pictures using ordinary HTML/CSS image layers. It requests only visible tiles and moves a compositor transform while dragging. There is no WebGL requirement, rotating camera, live 3D scene, external satellite service, map API key, or login. All runtime images are served from this repository.
+The earlier AI illustrations and their tile atlases were removed. [Registration method and verification](docs/geographic-registration.md).
 
-The architectural detail is an **AI-assisted artistic interpretation**. Road/river layout and landmark positions are based on the source composition, but generated details can differ from reality. Building heights are partly estimates. This is an exploration illustration, not surveyed imagery or an address-navigation map.
+## Lightweight display and explicit failures
 
-## Run
+The viewer uses HTML image elements and CSS compositor transforms. No WebGL, map SDK, per-frame city geometry rendering or permanent animation loop is required.
+
+- Loads visible satellite tiles, with an eight-request concurrency cap and a bounded detail budget.
+- Cancels obsolete work after panning and zooming; retains previous detail while new images arrive.
+- Times out hung image requests and exposes an explicit manual retry.
+- Loads a bundled **ground-only geographic drawing** beneath the satellite layer. This drawing comes from actual source roads, waterways and building footprints. It is clearly identified if satellite requests fail, and it contains no generated scenery or invented building heights.
+- The imagery is requested directly from the provider. No provider source raster, satellite tile cache or tile archive is included in this repository; `docs/preview.jpg` is an attributed screenshot of the interface. Internet access to the external imagery service is required.
+
+## Controls
+
+Drag, wheel, pinch or double-click to navigate. Use **+ / −**, arrow keys, **R** to reset, **/** to search and **Escape** to close panels. Search Turkish names with or without accents (`karaagac`, `uc serefeli`). Place cards show descriptions, geographic coordinates and links to the mapped location. The minimap, marker visibility, neighborhood labels, natural/dark tone, detail settings and share links remain available.
+
+## Run and rebuild
 
 ```sh
 npm start
 ```
 
-Open **http://localhost:5173**. The committed application needs no dependency installation or build step to serve. Alternatively:
+Open **http://localhost:5173**. The committed `dist/` is a complete static site; ordinary serving needs no dependency installation or build step.
 
-```sh
-python3 -m http.server 5173 --directory dist
-```
-
-## Controls
-
-- Drag to pan; scroll, double-click, pinch, or use **+ / −** to zoom.
-- Search Turkish names with or without accents: `uc serefeli`, `karaagac`.
-- Select a landmark thumbnail or marker to open its description.
-- Click the minimap to move across the city.
-- Settings: natural/dark tone, place markers, neighborhood labels, and image detail.
-- Share copies the selected place or current fixed-angle camera position.
-- Keyboard: arrows move, Shift + arrows move farther, + / − zoom, R resets, / searches, Escape closes panels.
-- Reduced-motion preferences are respected. Zoom is capped at the useful detail range of the illustrations.
-
-## Data and credits
-
-The source database contains **16,563 building footprints**: 2,904 from OpenStreetMap and 13,659 additional Microsoft footprints after overlap filtering. Coverage is the urban center, Sarayiçi, Yeniimaret, and Karaağaç: **26.511–26.595° E, 41.646–41.700° N**.
-
-- **© OpenStreetMap contributors**, ODbL 1.0; snapshot 2026-10-31.
-- **Microsoft GlobalMLBuildingFootprints**, CDLA Permissive 2.0; snapshot 2026-08-13.
-- Original scene rendering, illustrated image generation, and interface prepared for this project.
-
-The combined source database retains ODbL 1.0 and the Microsoft notice/license. The map images retain their source attribution. No imagery from the reference sites, Google, or Esri is included. See [data provenance](dist/data/README.md) and [illustration prompts and method](docs/illustration-prompts.md).
-
-## Rebuild
+To rebuild the local geographic fallback after source-data changes:
 
 ```sh
 npm install
@@ -58,16 +45,13 @@ npm run pages
 npm run check
 ```
 
-`npm run atlas` packages the single committed master illustration into the tile atlas; it makes no network requests. The packaging process reuses one tile-sized canvas and does not allocate a full-city raster. `@napi-rs/canvas` is only an offline build dependency.
+`npm run atlas` renders only the open-data fallback assets, without downloading or restyling satellite imagery. `npm run pages` synchronizes the GitHub Pages root entry with `dist/index.html`. Build dependency `@napi-rs/canvas` is not loaded by browsers.
 
-`npm run guides` recreates the open-data composition guides under `tmp/illustration-guides/`. Changing the source geometry requires reviewing the whole-city master. Separate generated regional overlays must not be reintroduced.
+## Sources
 
-## Verification
+- Satellite/aerial imagery: **Esri, Vantor, Earthstar Geographics, and the GIS User Community**. [World Imagery item and source terms](https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9). Tiles remain on the provider service; visible attribution is retained.
+- Fallback roads, water and mapped buildings: **© OpenStreetMap contributors**, ODbL 1.0; snapshot 2026-10-31.
+- Additional fallback building footprints: **Microsoft GlobalMLBuildingFootprints**, CDLA Permissive 2.0; snapshot 2026-08-13.
+- The open geometry database contains 16,563 input footprints. These are machine/mapped records with omissions and errors, not a count or survey of buildings visible in the satellite photo.
 
-Tests cover geographic projections, Turkish search, data bounds, source attribution, pointer-anchored zoom, tile selection and resolution, every published tile and thumbnail, illustration bounds, one-master coverage of all landmarks and decoded-pixel comparisons of every tile and card against that master, and both HTML entry points. Desktop/mobile navigation and loading are checked in Chrome with WebGL unavailable. [Performance and verification notes](docs/performance.md).
-
-## GitHub Pages
-
-Configured as **Deploy from a branch → `main` → `/ (root)`**. The generated root `index.html` loads assets from `dist/`; `.nojekyll` bypasses Jekyll. Run `npm run pages` after editing `dist/index.html`. Updates pushed to `main` publish automatically.
-
-`dist/` is also a complete static-hosting folder. The source master illustration are in `assets/illustrations/`; the deployed application loads only the packaged files in `dist/atlas-v5/`.
+See [source provenance](dist/data/README.md), the bundled licenses and [performance/QA notes](docs/performance.md). Reference-site artwork is not included.

@@ -1,16 +1,15 @@
 {
   "name": "edirne-isometric",
-  "version": "5.0.0",
+  "version": "6.0.0",
   "private": true,
-  "description": "A detailed illustrated isometric atlas of Edirne, using static local image tiles.",
+  "description": "Geographically registered satellite imagery of Edirne in one fixed isometric projection, without a live 3D engine.",
   "scripts": {
     "start": "node scripts/serve.mjs",
     "test": "node --test tests/*.test.cjs",
-    "check": "node --check dist/app.js && node --check dist/geometry.js && node --check dist/viewer-core.js && node --test tests/*.test.cjs",
+    "check": "node --check dist/app.js && node --check dist/geometry.js && node --check dist/satellite-core.js && node --check dist/imagery-layer.js && node --test tests/*.test.cjs",
     "pages": "node scripts/prepare-pages.mjs",
-    "atlas": "node scripts/build-illustrated-atlas.cjs",
-    "dev": "node scripts/serve.mjs",
-    "guides": "node scripts/build-guides.cjs"
+    "atlas": "node scripts/build-map-assets.cjs",
+    "dev": "node scripts/serve.mjs"
   },
   "engines": {
     "node": ">=20"

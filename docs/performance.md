@@ -1,23 +1,13 @@
-# v5 consistency correction
+# v6 performance and QA
 
-The active pyramid contains five tiles derived from one 1672 × 941 master. The viewer uses the same compositor-only interaction as v4. The v4 benchmark below is historical, not a new v5 frame-time measurement.
+The main map uses DOM images with a single CSS camera transform. No building geometry, canvas drawing, live 3D engine or permanent animation loop runs during interaction. The satellite layer is independent of the local fallback and does not block first display on a WebGL check or image-provider startup.
 
-# Illustrated atlas: performance and validation
+Requests are limited to 8 in flight for the main imagery and 2 for the minimap. The automatic image-selection budget is 64 visible tiles (36 in low-detail mode, 96 in high-detail mode). Level selection steps down when necessary to cover the viewport within that budget. Active requests that become obsolete are cancelled; previous loaded detail is retained until the replacement viewport has settled, within a bounded retention count.
 
-The current map uses a fixed-angle illustrated image pyramid. No city geometry or GPU map engine runs in the browser. Five original region illustrations are packaged offline into 68 WebP tiles at 0.125, 0.25, 0.5, and 1 pixel per projected world unit, plus an overview and place thumbnails.
+Failed/hung imagery is reported after a bounded request period and can be retried manually. No synthetic region redraw is used to disguise a failure. Thumbnail requests are lazy and use the same provider, with a labeled local fallback on failure.
 
-Dragging updates one parent transform. Tile selection is throttled to once per 100 ms; offscreen images are removed and the previous resolution stays until replacements arrive. There is no recurring animation loop while the map is idle. The source database and full source illustrations are not requested by the viewer. There are no third-party tile, font, analytics, or engine requests.
+`npm run check` verifies exact registration at all source zoom levels, neighboring edges, viewport coverage, coordinate conversion, data and loader failure/cancellation/retry cases. Browser QA checks real imagery loads over Selimiye, Meriç bridge and Karaağaç, zoom navigation and the mobile layout. These checks do not certify the imagery provider's real-world ground accuracy.
 
-The offline packager also has bounded raster memory: source regions are feathered at their native image dimensions, and one tile-sized canvas is reused for outputs. It does not allocate a full 9102 × 5120 city raster.
+## Browser update-cost sample
 
-The view is an artistic image map. Native source resolution varies between the overview and detailed regions. Zoom is limited to avoid excessive enlargement; architectural detail and fine geographic registration are approximate.
-
-## Validation
-
-Automated checks cover projections, search normalization, bounds, source data counts, tile selection and resolution, the complete tile pyramid and thumbnails, five source image payloads, detailed-region coverage of every landmark, both HTML entries, and the absence of WebGL/external imagery dependencies from the live viewer.
-
-Browser QA checks desktop and 390 × 844 mobile layouts, navigation, search, place cards, image loading, and settings. The browser's unavailable WebGL support does not affect this viewer.
-
-An explicit `?benchmark=1` diagnostic writes synchronous camera/UI update costs to `#performance-report`. These costs exclude image decoding, compositor work, network transfer, and display refresh; they are not FPS measurements.
-
-The v4 Chrome diagnostic ran 60 synchronous camera updates and excluded the first five. Across 55 samples, the median was **0.1 ms**, the 95th percentile **0.2 ms**, and the maximum **0.7 ms**. Nine map tiles were active; geometry draws per update were zero. These are JavaScript camera/UI costs, not GPU frame time or an FPS guarantee.
+The v6 built-in benchmark was run in Chrome at 1363 × 936: 55 measured synchronous camera/UI updates after 5 warmups, p95 0.1 ms, max 0.1 ms, median below the observed timer precision, 43 retained image elements at the sampling point, 0 geometry draws per update. These are synchronous JavaScript/UI update costs, **not FPS, GPU frame times or network transfer benchmarks**. Mobile (390 × 844) photo/detail views and a CSP-blocked imagery failure/retry fixture were also checked visually.

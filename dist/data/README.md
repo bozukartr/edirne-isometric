@@ -24,13 +24,15 @@ The source contains machine-detected footprints, rather than surveyed cadastral 
 
 The combined derivative database in `map.js` contains **16,563 buildings** and is distributed under **ODbL 1.0**, with the Microsoft source notice and original CDLA license retained. The browser does not download `map.js`; it is used to prepare the offline composition guides.
 
-## Illustrated map images
+## Satellite imagery and geographic fallback
 
-The source geometry is projected at one fixed isometric angle. Five original scene images were artistically restyled using built-in image generation, then packaged as local WebP map tiles. All 12 curated places fall within a detailed illustration region. Source illustrations and geographic rectangles are committed in `assets/illustrations/`; `scripts/build-guides.cjs` recreates the composition guides and `scripts/build-illustrated-atlas.cjs` packages the final images.
+The primary map requests **Esri World Imagery** directly at runtime. Attribution: Esri, Vantor, Earthstar Geographics, and the GIS User Community. Source metadata and terms: https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9 . No provider source rasters or offline satellite tile cache are bundled. `docs/preview.jpg` is an attributed interface screenshot.
 
-Road and river layouts follow the source composition. Fine registration, facades, vegetation, roof textures, and architectural details are generative interpretations. Some building heights and simplified landmark models are estimates. The map is for illustrated exploration, not surveying, measurement, or address navigation. The source footprint count describes the input database rather than an exact count of visible generated structures.
+Satellite pixels, place coordinates and the minimap share one exact Web Mercator-to-isometric transform. The old AI-generated city images were removed because they changed the geography. There is no generative redraw, inferred building-height shift or synthetic architectural detail in the primary map.
 
-No satellite imagery or reference-site artwork is bundled. Map images, gallery thumbnails, and the minimap all come from the original Edirne illustrations. The application requests no third-party map service.
+`map.js` supplies the bundled schematic fallback when imagery is unavailable. The builder converts its original equirectangular local coordinates to Web Mercator before projection. It draws source roads, water and footprint polygons at ground level; it does not add facade models, roofs, terrain or estimated heights. Missing areas and schematic widths retain the source data's limitations. Failures are visibly identified in the viewer and may be retried.
+
+Provider image acquisition dates, resolution and ground-position errors are not controlled by this project. This is a fixed-angle view of actual imagery, not a measured 3D reconstruction or surveying/navigation product. The 16,563 footprint count refers only to the fallback input dataset.
 
 ## Landmarks
 
@@ -50,13 +52,8 @@ Coordinates were checked against OSM geometry and the Edirne Provincial Director
 
 1. `python3 scripts/prepare-data.py` — refresh OSM-only data.
 2. `python3 scripts/import-microsoft-buildings.py` — merge the pinned Microsoft extract.
-3. `npm install` then `npm run guides` — render updated composition guides.
-4. Redraw/review changed illustrated regions against those guides.
-5. `npm run atlas` — package the committed illustrations into local tiles and thumbnails.
-6. `npm run pages` — update the root HTML entry.
+3. `npm install` then `npm run atlas` — render source geometry to local fallback overview/thumbnails.
+4. `npm run pages` — update the GitHub Pages root entry.
+5. `npm run check` — verify projection, registration, data, loading and static entries.
 
-Ordinary use and deployment need no source downloads, generation call, or build step.
-
-## Active v5 illustration
-
-All published images now come from one whole-city master; independent regional redraws were removed because their geography did not align. This restores visual continuity between tiles, zoom levels and cards. It does not validate the generated master against real-world geography. Native resolution is 1672 × 941; there are five tiles and no generated higher-detail levels.
+Ordinary deployment needs no source downloads, image generation, external API key or build step. Actual satellite display needs internet access to the provider service.

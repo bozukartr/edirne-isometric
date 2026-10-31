@@ -8,6 +8,12 @@ An interactive aerial map of **Edirne / Merkez**, inspired by [Isometric Istanbu
 
 *Screenshot: the actual satellite fallback. The QA browser has WebGL disabled.*
 
+## Version 3.2: 3D viewport sizing
+
+A reproducible CSS cascade bug collapsed the GPU map container to **zero height** after MapLibre added its `.maplibregl-map` class. The vendor stylesheet's `position: relative` overrode the application's absolute positioning. The application stylesheet now loads after the vendor CSS, and a scoped full-size container rule remains effective even under the former stylesheet order. Runtime checks reject a zero-sized viewport with a specific message.
+
+A browser regression fixture using the actual stylesheets measured **1363 × 0 before** and **1363 × 936 after** the fix. It does not require WebGL and does not claim to test GPU rendering. 3D startup errors now display their actual reason, including WebGL context creation and missing decompression support, rather than a generic fallback message.
+
 ## Version 3.1: loading recovery
 
 The map now opens immediately in an **independent 2D satellite viewer**. Select **3D** in the top toolbar to start the GPU renderer. 2D navigation stays available throughout startup. Switching back to 2D cancels pending initialization and releases an active GPU map. A failed or timed-out 3D attempt preserves the working 2D view and can be retried.
@@ -82,7 +88,7 @@ npm run check
 
 ## Validation and limits
 
-Thirty tests cover loading deadlines, cancellation, retry, provider failover, local recovery assets, and source bounds, Turkish search normalization, geographic projections, satellite tile coordinates and preview bounds, matrix precision, chunk offsets, every mesh vertex's height/material/normal, vendored dependencies, HTML resources, and the archived v2 pyramid. Syntax checks cover the application and both 3D modules.
+Thirty-two tests cover viewport sizing, loading deadlines, cancellation, retry, provider failover, local recovery assets, and source bounds, Turkish search normalization, geographic projections, satellite tile coordinates and preview bounds, matrix precision, chunk offsets, every mesh vertex's height/material/normal, vendored dependencies, HTML resources, and the archived v2 pyramid. Syntax checks cover the application and both 3D modules.
 
 The independent satellite viewer was checked in Chrome on desktop and a **390 × 844** mobile viewport, including search, details, zoom, imagery loading, and recovery after a failed 3D attempt. An injected missing-image URL also verified that complete remote imagery failure displays the local city map. The GLSL ES 300 shaders compiled and linked successfully using Mesa EGL / llvmpipe; the optional check is `python3 scripts/qa/verify-shaders.py` with `moderngl==5.12.0` installed.
 

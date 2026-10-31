@@ -1,3 +1,8 @@
+export function assertMapViewport(container){
+ const width=container.clientWidth,height=container.clientHeight;
+ if(!Number.isFinite(width)||!Number.isFinite(height)||width<1||height<1){const error=new Error('3D harita alanının boyutu sıfır. Sayfayı yeniden yükle.');error.code='VIEWPORT_SIZE';throw error;}
+ return {width,height};
+}
 /* Deadlines and independent 2D/3D switching. No DOM or GPU dependency. */
 export function withDeadline(promise,ms,label='İşlem',signal){
  return new Promise((resolve,reject)=>{

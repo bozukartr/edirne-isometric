@@ -23,7 +23,7 @@ function paintUI(){
 function status(s){
  if(s.engine){$('engine-notice').hidden=true;$('mode-3d').disabled=false;$('pitch').disabled=!s.available3D;$('north').disabled=!s.available3D;$('navigation-hint').innerHTML=s.available3D?'Sürükle, keşfet. <span>Sağ tuşla açıyı değiştir.</span>':'Sürükle, keşfet. <span>3D görünümü üstten açabilirsin.</span>';requestUI();}
  if(s.modeLoading){$('engine-notice').textContent='3D hazırlanıyor… 2D haritayı kullanmaya devam edebilirsin.';$('engine-notice').hidden=false;}
- if(s.modeError){$('engine-notice').textContent=document.body.classList.contains('local-map')?'3D açılamadı. Yerel 2D harita açık.':'3D açılamadı. 2D uydu haritası açık.';$('engine-notice').hidden=false;$('viewport').dataset.lastError=s.modeError;toast('3D açılamadı; 2D haritayı kullanabilirsin.');}
+ if(s.modeError){$('engine-notice').textContent='3D açılamadı: '+s.modeError;$('engine-notice').hidden=false;$('viewport').dataset.lastError=s.modeError;toast('3D açılamadı. Nedeni haritanın üstünde gösteriliyor.');console.warn('3D startup failed:',s.modeError);}
  if(s.localMapReady){document.querySelector('[data-map-mode="2d"]').textContent='2D Harita';$('mode-2d').textContent='Harita';$('loading').hidden=true;$('error').hidden=true;clearTimeout(imageryTimeout);document.body.classList.add('local-map');$('viewport').dataset.imagery='local';$('engine-notice').textContent='Uydu sunucusuna ulaşılamadı. Yerel şehir haritası gösteriliyor.';$('engine-notice').hidden=false;}
  if(s.imageryReady){document.querySelector('[data-map-mode="2d"]').textContent='2D Uydu';$('mode-2d').textContent='Uydu';if(document.body.classList.contains('local-map'))$('engine-notice').hidden=true;document.body.classList.remove('local-map');imageryReady=true;$('loading').hidden=true;$('error').hidden=true;clearTimeout(imageryTimeout);$('viewport').dataset.imagery='ready';}
  if(s.imageryError&&!s.localMapReady&&!imageryReady){$('viewport').dataset.imagery='unavailable';$('loading').hidden=true;$('error').hidden=false;}
@@ -79,7 +79,7 @@ window.addEventListener('hashchange',loadHash);window.addEventListener('resize',
 let imageryTimeout;
 async function init(){
  $('error').hidden=true;$('loading').hidden=false;imageryReady=false;engine?.destroy();clearTimeout(imageryTimeout);imageryTimeout=setTimeout(()=>{if(!imageryReady){$('loading').hidden=true;$('error').hidden=false;}},16000);
- try{const module=await import(new URL('map-engine.mjs?v=3.1',assetRoot));miniBounds=module.overviewInfo();$('minimap-image').src=module.overviewURL(miniBounds);buildPlaces();engine=await module.createMapEngine($('map-surface'),{onMove:requestUI,onStatus:status,reducedMotion:reduceMotion,mode:new URLSearchParams(location.search).get('mode')||'2d'});engine.setQuality(quality);try{light(localStorage.getItem('edirne-light-v3')==='evening');}catch{}loadHash();requestUI();}
+ try{const module=await import(new URL('map-engine.mjs?v=3.2',assetRoot));miniBounds=module.overviewInfo();$('minimap-image').src=module.overviewURL(miniBounds);buildPlaces();engine=await module.createMapEngine($('map-surface'),{onMove:requestUI,onStatus:status,reducedMotion:reduceMotion,mode:new URLSearchParams(location.search).get('mode')||'2d'});engine.setQuality(quality);try{light(localStorage.getItem('edirne-light-v3')==='evening');}catch{}loadHash();requestUI();}
  catch(error){console.error('Atlas initialization failed:',error);$('loading').hidden=true;$('error').hidden=false;}
 }
 $('retry').addEventListener('click',()=>location.reload());init();

@@ -10,3 +10,8 @@
 @media(max-width:760px){.view-switch{position:absolute;left:0;top:91px;height:31px;padding:3px;background:#111a16ee}.view-switch button{font-size:9px;height:23px;padding:0 12px}.engine-notice{top:143px}.has-detail .engine-notice{left:14px;max-width:calc(100% - 80px)}.loading-state{top:179px;white-space:nowrap}.has-detail .view-switch{display:flex}}
 
 .local-fallback-map{position:absolute;max-width:none;display:block;pointer-events:none;user-select:none}.local-map .imagery-credit{visibility:hidden}
+
+/* MapLibre adds .maplibregl-map (position:relative) at runtime. Keep the GPU
+   plane full-size even when vendor CSS is loaded after the app stylesheet. */
+#map-surface>.map-plane.maplibre-surface{position:absolute;inset:0;width:100%;height:100%}
+.engine-notice{overflow-wrap:anywhere;white-space:normal}

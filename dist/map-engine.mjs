@@ -1,16 +1,22 @@
-import {withDeadline,waitForMapReady,createModeController} from './engine-lifecycle.mjs?v=3.1';
+import {withDeadline,waitForMapReady,createModeController,assertMapViewport} from './engine-lifecycle.mjs?v=3.2';
 const S=window.SatelliteMath;
 const DEFAULT_VIEW={center:[26.5565,41.6776],zoom:16.15,pitch:52,bearing:-28};
 const attribution='Source: Esri, Vantor, Earthstar Geographics, and the GIS User Community';
 export function overviewInfo(){const a=S.mercator(26.511,41.700),b=S.mercator(26.595,41.646),cx=(a[0]+b[0])/2,cy=(a[1]+b[1])/2,h=b[1]-a[1],w=Math.max(b[0]-a[0],h*132/85),hh=Math.max(h,w*85/132);return {west:cx-w/2,east:cx+w/2,north:cy-hh/2,south:cy+hh/2};}
 export function overviewURL(bounds,width=264,height=170){const c=S.CIRCUMFERENCE,bbox=[(bounds.west-.5)*c,(.5-bounds.south)*c,(bounds.east-.5)*c,(.5-bounds.north)*c];const q=new URLSearchParams({bbox:bbox.join(','),bboxSR:'3857',imageSR:'3857',size:`${width},${height}`,format:'jpg',f:'image'});return 'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?'+q;}
-function canUse3D(){if(!window.DecompressionStream)return false;try{const c=document.createElement('canvas'),gl=c.getContext('webgl2');if(!gl)return false;gl.getExtension('WEBGL_lose_context')?.loseContext();return true;}catch{return false;}}
+function require3D(){
+ let gl;
+ try{gl=document.createElement('canvas').getContext('webgl2');}catch{}
+ if(!gl){const error=new Error('WebGL 2 çizim bağlamı başlatılamadı. 3D bu tarayıcı oturumunda kullanılamıyor.');error.code='WEBGL_CONTEXT';throw error;}
+ gl.getExtension('WEBGL_lose_context')?.loseContext();
+ if(!window.DecompressionStream){const error=new Error('Bu tarayıcı 3D bina verisini açmak için gereken DecompressionStream özelliğini sunmuyor.');error.code='DECOMPRESSION_UNAVAILABLE';throw error;}
+}
 export function createMapEngine(container,{onMove=()=>{},onStatus=()=>{},reducedMotion=false,mode='2d',imageryURLs=S.imageryURLs}={}){
  const plane=document.createElement('div');plane.className='map-plane satellite-plane';container.replaceChildren(plane);
  let controller;
  const moved=()=>onMove(controller),fallback=createFallback(plane,{onMove:moved,onStatus,reducedMotion,imageryURLs});
  controller=createModeController(fallback,async(view,signal)=>{view.bearing=view.bearing||DEFAULT_VIEW.bearing;
-  if(!canUse3D())throw Error('Bu tarayıcı WebGL 2 desteklemiyor');
+  require3D();
   const stage=document.createElement('div');stage.className='map-plane maplibre-surface';stage.style.opacity='0';stage.style.pointerEvents='none';container.append(stage);
   try{return await createWebGL(stage,{view,signal,onMove:moved,onStatus:s=>{if(!signal.aborted)onStatus(s);},reducedMotion});}catch(error){stage.remove();throw error;}
  },{onMode:s=>{onStatus(s);moved();}});
@@ -24,8 +30,10 @@ async function createWebGL(container,{view,signal,onMove,onStatus,reducedMotion}
    const L=await withDeadline(import('./vendor/maplibre/maplibre-gl.mjs'),6000,'3D motoru',signal);if(signal.aborted)throw Error('İşlem iptal edildi');L.setWorkerUrl(new URL('./vendor/maplibre/maplibre-gl-worker.mjs',import.meta.url).href);L.setMaxParallelImageRequests(10);
    const surface=container;
    map=new L.Map({keyboard:false,container:surface,center:view.center,zoom:view.zoom,pitch:view.pitch,bearing:view.bearing,maxPitch:68,minZoom:12.5,maxZoom:18.2,maxBounds:[[26.46,41.61],[26.66,41.74]],pixelRatio:Math.min(devicePixelRatio||1,1.5),attributionControl:false,renderWorldCopies:false,fadeDuration:150,style:{version:8,projection:{type:'mercator'},sources:{satellite:{type:'raster',tiles:[S.imageryURL('{z}','{x}','{y}')],tileSize:256,maxzoom:18,attribution}},layers:[{id:'satellite',type:'raster',source:'satellite',paint:{'raster-fade-duration':150,'raster-resampling':'linear'}}]}});
+   assertMapViewport(container);
    await waitForMapReady(map,8000,signal);
-   const {createBuildingLayer}=await withDeadline(import('./photo-buildings.mjs?v=3.1'),5000,'Bina katmanı',signal);const layer=createBuildingLayer(new URL('./scene3d/',import.meta.url),{onStatus});if(signal.aborted)throw Error('İşlem iptal edildi');map.addLayer(layer);
+   assertMapViewport(container);
+   const {createBuildingLayer}=await withDeadline(import('./photo-buildings.mjs?v=3.2'),5000,'Bina katmanı',signal);const layer=createBuildingLayer(new URL('./scene3d/',import.meta.url),{onStatus});if(signal.aborted)throw Error('İşlem iptal edildi');map.addLayer(layer);
    const adapter={available3D:true,
     getView(){const c=map.getCenter();return {center:[c.lng,c.lat],zoom:map.getZoom(),pitch:map.getPitch(),bearing:map.getBearing()};},
     setView(v,animate=true){const state={...v,duration:reducedMotion||!animate?0:700,essential:false};map.easeTo(state);},
@@ -35,7 +43,7 @@ async function createWebGL(container,{view,signal,onMove,onStatus,reducedMotion}
     metresToPixels(m){const c=map.getCenter();return 512*2**map.getZoom()*m/(S.CIRCUMFERENCE*Math.cos(c.lat*Math.PI/180));},
     set3D(v){this.setView({pitch:v?52:0});},setPitch(p){this.setView({pitch:p},false);},setNorth(){this.setView({bearing:0});},
     setQuality(v){map.setPixelRatio(v==='low'?1:Math.min(devicePixelRatio||1,v==='high'?2:1.5));layer.setQuality(v);},setNight(v){layer.setNight(v);},
-    show(v){container.style.opacity=v?'1':'0';container.style.pointerEvents=v?'auto':'none';if(v)map.resize();},resize(){map.resize();},destroy(){map.remove();container.remove();}
+    show(v){container.style.opacity=v?'1':'0';container.style.pointerEvents=v?'auto':'none';if(v){map.resize();assertMapViewport(container);}},resize(){map.resize();},destroy(){map.remove();container.remove();}
    };map.on('move',()=>onMove(adapter));map.on('idle',()=>onStatus({imageryReady:true}));return adapter;
  }catch(error){map?.remove();throw error;}
 }

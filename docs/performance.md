@@ -1,6 +1,12 @@
 # Performance and verification
 
-## Current version 3.1
+## Current version 3.2
+
+The GPU container could collapse to zero height when MapLibre added its `.maplibregl-map` class: the later vendor stylesheet overrode the application's `position: absolute` with `position: relative`. The stylesheet order and scoped full-size rule are corrected. A real-browser CSS fixture using the original adverse stylesheet order measured 1363 × 0 before and 1363 × 936 after. Runtime size checks prevent a collapsed viewport from being treated as a successful 3D startup. Actual startup failures are now shown in the UI.
+
+This verifies the layout defect and fix; the cloud browser still cannot perform a full WebGL visual test.
+
+## Independent 2D startup
 
 Startup now returns a working DOM-based 2D camera immediately. 3D is an independent, cancellable transition, initiated by the toolbar or `?mode=3d`. Engine imports and map readiness have unconditional deadlines. A startup failure keeps the 2D viewer alive; selecting 2D also destroys an active GPU map. A late result from a cancelled attempt is discarded.
 
@@ -16,7 +22,7 @@ Ground imagery is managed by MapLibre. The WebGL-free fallback uses DOM satellit
 
 ### Verification
 
-- 30 tests passed, covering full mesh validation, projections, deadlines, retry/cancellation, provider failover, and local recovery assets.
+- 32 tests passed, covering full mesh validation, projections, deadlines, retry/cancellation, provider failover, and local recovery assets.
 - Application and 3D module JavaScript syntax checks passed.
 - GLSL ES 300 shaders compiled and linked using Mesa EGL / llvmpipe.
 - Chrome desktop and 390 × 844 mobile fallback checks passed for actual aerial imagery, Turkish search, place cards, navigation, and native imagery resolution limits.

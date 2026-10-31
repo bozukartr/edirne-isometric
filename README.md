@@ -4,6 +4,10 @@ An interactive, isometric atlas of **Edirne / Merkez**, built with plain HTML, C
 
 Explore the historic center, Tunca and Meriç river corridors, Sarayiçi, Yeniimaret, and Karaağaç.
 
+[Open the private live atlas](https://edirne-isometric-atlas.burakgol.chatgpt.site) · Sign in with the owner’s ChatGPT account.
+
+![Edirne isometric atlas preview](docs/preview.jpg)
+
 ## Run locally
 
 Requires Node.js 20+ only for the convenient development server and tests. No dependencies to install, no build step, and no API keys.

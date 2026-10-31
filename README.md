@@ -1,101 +1,102 @@
-# Edirne — Isometric Atlas
+# Isometric Edirne
 
-An interactive, isometric atlas of **Edirne / Merkez**, built with plain HTML, CSS, JavaScript, and Canvas 2D. Inspired by the spirit of [Isometric NYC](https://isometric.nyc) and [Isometric Istanbul](https://isometricistanbul.com); the implementation and landmark illustrations are original.
+A full-screen, interactive isometric map of **Edirne / Merkez**, inspired by [Isometric Istanbul](https://isometricistanbul.com/) and [Isometric NYC](https://isometric.nyc/). Plain HTML, CSS, and JavaScript; original map rendering and landmark models.
 
-Explore the historic center, Tunca and Meriç river corridors, Sarayiçi, Yeniimaret, and Karaağaç.
+**[Open the map](https://bozukartr.github.io/edirne-isometric/)**
 
-[Open the public live atlas](https://bozukartr.github.io/edirne-isometric/)
+![Isometric Edirne preview](docs/preview.jpg)
 
-![Edirne isometric atlas preview](docs/preview.jpg)
+## Version 2
 
-## Run locally
+The viewer now uses a pre-rendered, four-level **WebP tile pyramid**, rather than redrawing city geometry on every frame. Dragging and zooming update a compositor transform. Only visible image regions are requested, and there is no animation loop when the map is idle.
 
-Requires Node.js 20+ only for the convenient development server and tests. No dependencies to install, no build step, and no API keys.
+The map now includes **16,563 building footprints**: 2,904 from OpenStreetMap and 13,659 additional Microsoft open-building footprints after overlap filtering. Roofs, facades, windows, shadows, trees, and landmark models are rendered offline. A compact dark interface leaves the map visible, with search at the top, landmark thumbnails at the bottom, and an interactive minimap.
+
+## Run
 
 ```sh
 npm start
 ```
 
-Open **http://localhost:5173**. Alternatively, serve `dist/` with any static HTTP server:
+Open **http://localhost:5173**. No dependencies or API keys are needed to serve the included map. Alternatively:
 
 ```sh
 python3 -m http.server 5173 --directory dist
 ```
 
-## Explore
+## Controls
 
-- Drag to pan; scroll, pinch, or use **+ / −** to zoom around the pointer.
-- Search names with or without Turkish accents: `uc serefeli` and `karaagac` work.
-- Filter heritage, bridges, and nature; select a list item or a map pin for its story.
-- Select **Take the scenic route** to step through ten landmarks. This is an editorial sequence, not a calculated walking itinerary.
-- Copy a place link to share its URL fragment, such as `#selimiye`.
-- Switch day/evening lighting. The preference is saved locally in your browser.
-- Toggle pins, labels, and 3D buildings using the layers button.
-- On mobile, open **Explore Edirne** for the searchable drawer.
-- Keyboard: arrows pan, Shift + arrows pan farther, + / − zoom, R resets the view, / focuses search, and Escape closes panels.
+- Drag to pan; scroll, double-click, pinch, or use **+ / −** to zoom.
+- Search Turkish place names with or without accents: `uc serefeli` and `karaagac` work.
+- Select a landmark thumbnail or a map marker to view its details.
+- Click the minimap to move to another part of the city.
+- Settings: day/evening light, markers, neighborhood labels, and automatic/low/high detail.
+- Share copies a link to the selected landmark or the current map view.
+- Keyboard: arrows pan, Shift + arrows pan farther, + / − zoom, R resets, / searches, and Escape closes panels.
+- The interface and place descriptions are in Turkish. Reduced-motion preferences are respected.
 
-## Map data and scope
+## Data and visual interpretation
 
-The included snapshot contains **2,904 OpenStreetMap building footprints** and **7,516 total features**, including real streets, waterways, and land-use geometry, downloaded on **31 October 2026**.
+Coverage: **26.511–26.595° E, 41.646–41.700° N**. This is the urban area of Merkez, Sarayiçi, Yeniimaret, and Karaağaç, rather than the entire rural district.
 
-Coverage: bounding box **26.511–26.595° E, 41.646–41.700° N**. This is the urban area of Merkez and Karaağaç, not the full rural administrative district. No live map service is needed after the page loads.
+- Roads, waterways, land use, and original buildings: **© OpenStreetMap contributors**, ODbL 1.0; downloaded 2026-10-31.
+- Additional building footprints: **Microsoft GlobalMLBuildingFootprints**, CDLA Permissive 2.0; 2026-08-13 dataset.
+- OSM footprints take precedence where a Microsoft footprint substantially overlaps one.
+- Some heights are sourced; the remainder are deterministic estimates. Vertical scale is emphasized for legibility. Roof materials, colors, windows, and trees are illustrative. Landmark models are simplified architectural interpretations. Terrain is flat; river widths are stylized where only centerlines are available.
 
-OSM coverage varies: an empty block means a building footprint was not in the source snapshot. The application does not invent missing buildings. Heights are taken from OSM where available; otherwise deterministic estimates are used and vertically emphasized for legibility. Tree placement is illustrative within mapped green areas. River centerlines are real, but widths are stylized where polygon geometry is unavailable. Terrain is flat. Landmark shapes are artistic approximations rather than surveyed 3D models.
+See [data provenance and licenses](dist/data/README.md). The combined derivative database in `dist/data/map.js` is distributed under ODbL 1.0, retaining the Microsoft source notice and license. No reference-site imagery or code was copied.
 
-**© OpenStreetMap contributors.** The derived map database in `dist/data/map.js` is distributed under [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/). See [data sources and credits](dist/data/README.md). Retain the on-map attribution when adapting the project.
+## Rebuild the map images
 
-### Refresh the snapshot
-
-```sh
-python3 scripts/prepare-data.py
-```
-
-Or compile a previously downloaded OSM XML extract:
+The pre-rendered tiles are committed, so deployment needs no build step. To regenerate them after editing geometry or rendering:
 
 ```sh
-python3 scripts/prepare-data.py path/to/snapshot.osm
+npm install
+npm run atlas
+npm run pages
 ```
 
-The script uses the public OSM map endpoint once, performs coordinate conversion and clipping, and writes the self-contained `map.js` file atomically. Be considerate of the public API; this is a manual refresh tool, not a polling service.
+Only the offline image builder uses `@napi-rs/canvas`. It is not shipped to or run in the browser. The builder produces 116 WebP tiles at 0.25, 0.5, 1, and 2 pixels per meter, an overview, and 12 landmark thumbnails.
 
-## Project structure
+To refresh the OSM source, run `python3 scripts/prepare-data.py`. This replaces the combined snapshot with OSM-only data; then run `python3 scripts/import-microsoft-buildings.py` to merge the pinned Microsoft extract again, followed by `npm run atlas` and `npm run pages`.
 
-```text
-dist/
-  index.html           Semantic application shell
-  styles.css           Responsive layout and day/evening themes
-  app.js               Canvas renderer, UI, camera, and interactions
-  geometry.js          Geographic projection and camera math
-  favicon.svg          Original vector icon
-  data/
-    map.js             Bundled ODbL OpenStreetMap snapshot
-    places.js          Curated landmark directory and original copy
-    README.md          Data provenance and interpretation notes
-scripts/
-  serve.mjs            Dependency-free static development server
-  prepare-data.py      Reproducible OSM snapshot compiler
-tests/
-  atlas.test.cjs       Projection, zoom-anchor, data integrity tests
-```
-
-## Verification
+## Verify
 
 ```sh
 npm test
 ```
 
-Tests cover coordinate round trips, isometric inversion, pointer-anchored zoom and limits, Turkish name normalization, landmark IDs and coverage, finite bounded geometries, polygon closure, metadata consistency, and local script references. Desktop and a 390 × 844 mobile viewport were also checked in Chrome for search, filters, place details, URL fragments, map layers, and theme switching.
+Twelve tests cover projections, pointer-anchored zoom, Turkish name search, geographic bounds, source counts, tile selection, resolution selection, the complete pyramid, thumbnails, and both HTML entry points. Desktop and 390 × 844 mobile layouts were checked in Chrome for navigation, search, place details, themes, and settings.
 
-## Deploy
+[Performance comparison and limitations](docs/performance.md)
 
-Upload the contents of **`dist/`** to any static host. All resource URLs are relative, so repository subpaths work. Google Fonts is optional; local serif and sans-serif fallbacks keep the atlas usable if the font CDN is unavailable. The map itself never requests third-party tiles.
+## Publish
 
-GitHub Pages publishes directly from **`main` → `/ (root)`** using **Deploy from a branch**. The repository-root `index.html` loads the same application assets from `dist/`. `.nojekyll` disables the Jekyll build step.
+GitHub Pages is configured as **Deploy from a branch → `main` → `/ (root)`**. The root `index.html` loads assets from `dist/`; `.nojekyll` bypasses Jekyll. Pushes to `main` publish updates automatically.
 
-After changing `dist/index.html`, run `npm run pages` to refresh the root entry before committing. Pushes to `main` automatically publish updates. No separate deployment branch or custom Actions workflow is required.
+Run `npm run pages` after changing `dist/index.html`. Keep `dist/atlas/` in the repository: it contains the published map images. You can also upload `dist/` to any static host. The application needs no server, map API, font CDN, analytics, or login.
 
-## Architecture
+## Structure
 
-Longitude and latitude are converted to local equirectangular meters around Edirne. A fixed orthographic isometric projection compresses the ground plane. Canvas paths are prepared once, visible geometry is culled, and buildings and trees are sorted by depth. The scene redraws only on camera or UI changes. Device pixel ratio is capped at 2 for mobile memory use.
-
-Landmark markers are ordinary accessible HTML buttons. The directory provides a keyboard-accessible alternative to interacting with the canvas. Motion respects `prefers-reduced-motion`. There are no accounts, analytics, API tokens, or runtime dependencies in the application.
+```text
+index.html                 Generated GitHub Pages entry
+.nojekyll                  Static Pages publication
+dist/
+  index.html               Application shell
+  styles.css               Responsive dark map interface
+  app.js                   Tile lifecycle, compositor camera, UI
+  viewer-core.js           Pure tile/viewport math
+  geometry.js              Geographic projection and zoom math
+  atlas/                   Published WebP pyramid and thumbnails
+  data/                    Offline source database and place directory
+scripts/
+  build-atlas.cjs           Offline map image generation
+  lib/render-scene.cjs      Detailed geographic renderer
+  prepare-pages.mjs        Generate root HTML entry
+  prepare-data.py          Download and compile OSM data
+  import-microsoft-buildings.py
+  merge-buildings.py       Merge Microsoft footprints with OSM precedence
+  serve.mjs                Dependency-free local server
+tests/
+  atlas.test.cjs
+```

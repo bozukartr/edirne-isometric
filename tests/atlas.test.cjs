@@ -38,7 +38,34 @@ test('all map coordinates are finite, clipped and structurally valid',()=>{
 });
 test('HTML resource references exist and no QA harness is in the app',()=>{
  const html=fs.readFileSync(path.join(root,'dist/index.html'),'utf8');
- for(const match of html.matchAll(/(?:src|href)="\.\/([^"#]+)"/g))assert.ok(fs.existsSync(path.join(root,'dist',match[1])),match[1]);
+ for(const match of html.matchAll(/(?:src|href)="\.\/([^"#]+)"/g))assert.ok(fs.existsSync(path.join(root,'dist',match[1].split('?')[0])),match[1]);
  assert.ok(!html.includes('_qa.html'));
 });
 test('point-in-polygon handles inside and outside cases',()=>{const p=[[0,0],[10,0],[10,10],[0,10]];assert.ok(M.inPolygon(5,5,p));assert.ok(!M.inPolygon(-1,5,p));assert.ok(!M.inPolygon(50,50,p));});
+const V=require('../dist/viewer-core.js');
+const manifest=JSON.parse(fs.readFileSync(path.join(root,'dist/atlas/manifest.json'),'utf8'));
+test('tile detail increases with zoom and respects low-bandwidth mode',()=>{
+ const levels=manifest.levels;
+ for(let z=.1;z<=3;z+=.1){assert.ok(V.levelFor(levels,z,2,'low')<=V.levelFor(levels,z,2,'high'));assert.ok(V.levelFor(levels,z,2)>=0);assert.ok(V.levelFor(levels,z,2)<levels.length);}
+ assert.ok(V.levelFor(levels,.2,1)<V.levelFor(levels,2,1));
+});
+test('tile selection is bounded and covers the viewport without duplicate requests',()=>{
+ const view={left:-1200,right:1200,top:-700,bottom:700},tiles=V.tileRange(manifest,2,view);
+ assert.equal(new Set(tiles.map(t=>t.key)).size,tiles.length);assert.ok(tiles.length<=12);
+ for(const t of tiles){assert.ok(t.col>=0&&t.col<manifest.levels[2].cols);assert.ok(t.row>=0&&t.row<manifest.levels[2].rows);}
+ const minX=Math.min(...tiles.map(t=>t.x)),maxX=Math.max(...tiles.map(t=>t.x+t.span));assert.ok(minX<=view.left&&maxX>=view.right);
+ assert.equal(V.tileRange(manifest,2,{left:1e7,right:1e7+100,top:1e7,bottom:1e7+100}).length,0);
+});
+test('every published pyramid tile and landmark thumbnail exists',()=>{
+ assert.equal(manifest.meta.buildings,map.meta.buildings);
+ assert.equal(manifest.meta.microsoftBuildings+manifest.meta.osmBuildings,manifest.meta.buildings);
+ for(let l=0;l<manifest.levels.length;l++){const level=manifest.levels[l];for(let y=0;y<level.rows;y++)for(let x=0;x<level.cols;x++){
+  const bytes=fs.readFileSync(path.join(root,`dist/atlas/${l}/${x}-${y}.webp`));assert.equal(bytes.toString('ascii',0,4),'RIFF');assert.equal(bytes.toString('ascii',8,12),'WEBP');
+ }}
+ for(const p of places)assert.ok(fs.existsSync(path.join(root,`dist/atlas/thumbs/${p.id}.webp`)));
+});
+test('published root entry resolves the same application assets as dist',()=>{
+ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+ for(const match of html.matchAll(/(?:src|href)="\.\/([^"#]+)"/g))assert.ok(fs.existsSync(path.join(root,match[1].split('?')[0])),match[1]);
+ assert.ok(!html.includes('data/map.js'));assert.ok(!html.includes('_baseline'));
+});

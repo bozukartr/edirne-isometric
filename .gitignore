@@ -6,3 +6,7 @@ node_modules/
 *.tar.gz
 __pycache__/
 dist/_qa.html
+
+dist/_baseline/
+dist/_qa.html
+.openai/

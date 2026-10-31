@@ -1,0 +1,8 @@
+node_modules/
+.env
+.env.*
+.DS_Store
+*.zip
+*.tar.gz
+__pycache__/
+dist/_qa.html

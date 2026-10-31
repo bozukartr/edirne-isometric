@@ -1,24 +1,21 @@
 {
   "name": "edirne-isometric",
-  "version": "3.2.0",
+  "version": "4.0.0",
   "private": true,
-  "description": "An aerial map of Edirne with live satellite imagery and photo-textured 3D buildings.",
+  "description": "A detailed illustrated isometric atlas of Edirne, using static local image tiles.",
   "scripts": {
     "start": "node scripts/serve.mjs",
     "test": "node --test tests/*.test.cjs",
-    "check": "node --check dist/app.js && node --check dist/map-engine.mjs && node --check dist/engine-lifecycle.mjs && node --check dist/imagery-loader.js && node --check dist/photo-buildings.mjs && node --check dist/satellite-core.js && node --test tests/*.test.cjs",
+    "check": "node --check dist/app.js && node --check dist/geometry.js && node --check dist/viewer-core.js && node --test tests/*.test.cjs",
     "pages": "node scripts/prepare-pages.mjs",
-    "atlas": "node scripts/build-atlas.cjs",
+    "atlas": "node scripts/build-illustrated-atlas.cjs",
     "dev": "node scripts/serve.mjs",
-    "scene3d": "node scripts/build-scene3d.cjs",
-    "fallback": "node scripts/build-fallback.cjs"
+    "guides": "node scripts/build-guides.cjs"
   },
   "engines": {
     "node": ">=20"
   },
   "devDependencies": {
-    "@napi-rs/canvas": "0.1.100",
-    "earcut": "^3.0.2",
-    "maplibre-gl": "^6.16.0"
+    "@napi-rs/canvas": "0.1.100"
   }
 }

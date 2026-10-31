@@ -1,34 +1,18 @@
 # Isometric Edirne
 
-An interactive aerial map of **Edirne / Merkez**, inspired by [Isometric Istanbul](https://isometricistanbul.com/) and [Isometric NYC](https://isometric.nyc/). HTML, CSS, and JavaScript, with locally vendored MapLibre GL JS.
+A detailed, illustrated map of **Edirne / Merkez**, inspired by [Isometric Istanbul](https://isometricistanbul.com/) and [Isometric NYC](https://isometric.nyc/). Explore the city from one fixed isometric angle: drag to move, zoom into neighborhoods, and open the stories behind 12 landmarks.
 
 **[Open the map](https://bozukartr.github.io/edirne-isometric/)**
 
-![Live satellite view in the 2D browser fallback](docs/preview.jpg)
+![Isometric Edirne](docs/preview.jpg)
 
-*Screenshot: the actual satellite fallback. The QA browser has WebGL disabled.*
+## Illustrated city atlas
 
-## Version 3.2: 3D viewport sizing
+The map is made from five original illustrations: a city overview, the historic center, Sarayiçi–Yeniimaret, Karaağaç–Meriç, and the eastern neighborhoods. Composition guides were rendered from the open road and building database, then restyled with built-in image generation. Region images are combined with soft overlap masks and packaged into **68 WebP tiles**, an overview, and 12 place thumbnails.
 
-A reproducible CSS cascade bug collapsed the GPU map container to **zero height** after MapLibre added its `.maplibregl-map` class. The vendor stylesheet's `position: relative` overrode the application's absolute positioning. The application stylesheet now loads after the vendor CSS, and a scoped full-size container rule remains effective even under the former stylesheet order. Runtime checks reject a zero-sized viewport with a specific message.
+The browser displays these ready-made pictures using ordinary HTML/CSS image layers. It requests only visible tiles and moves a compositor transform while dragging. There is no WebGL requirement, rotating camera, live 3D scene, external satellite service, map API key, or login. All runtime images are served from this repository.
 
-A browser regression fixture using the actual stylesheets measured **1363 × 0 before** and **1363 × 936 after** the fix. It does not require WebGL and does not claim to test GPU rendering. 3D startup errors now display their actual reason, including WebGL context creation and missing decompression support, rather than a generic fallback message.
-
-## Version 3.1: loading recovery
-
-The map now opens immediately in an **independent 2D satellite viewer**. Select **3D** in the top toolbar to start the GPU renderer. 2D navigation stays available throughout startup. Switching back to 2D cancels pending initialization and releases an active GPU map. A failed or timed-out 3D attempt preserves the working 2D view and can be retried.
-
-`?mode=2d` explicitly starts without importing MapLibre; `?mode=3d` attempts 3D while keeping the initial 2D map available. Asset versions are bumped to avoid mixing cached startup code. Map initialization has an unconditional deadline, including the case where the style reports ready but the map's `load` event never fires.
-
-Live image requests retry the second official Esri host after an error or timeout. If neither responds, a **local plan-view map** generated from the open building/road data appears automatically, with an explicit notice that satellite imagery is unavailable. The backup contains no provider imagery. It is a recovery view, not a satellite image. `npm run fallback` rebuilds its committed WebP and bounds manifest.
-
-## Aerial photography and 3D buildings
-
-The default view uses **live Esri World Imagery** on the ground and geographically aligned aerial photo textures on building roofs. A custom WebGL 2 layer draws nearby buildings, including simplified domes and minarets for Selimiye, Üç Şerefeli, and Eski Cami. The camera can tilt and rotate. The compact dark interface provides Turkish search, 12 landmarks, place cards, a minimap, lighting, and quality settings.
-
-This is an approximate, photo-textured **2.5D reconstruction**. Footprints come from OpenStreetMap and Microsoft; some heights are estimates. Facades and monument geometry are procedural approximations, and terrain is flat. It is not a photogrammetric city scan. Imagery dates, registration, resolution, and building footprints may differ.
-
-**WebGL 2 and DecompressionStream are required for 3D.** Unsupported browsers keep using the independent **2D satellite map**. The fallback does not download the 3D engine or building geometry. Internet access to Esri is required for satellite imagery in both modes; the local recovery map is served from this repository. Available native imagery is capped at zoom 18 to avoid the provider's “map data not yet available” tiles at higher levels in this area. Further zoom magnifies the available imagery.
+The architectural detail is an **AI-assisted artistic interpretation**. Road/river layout and landmark positions are based on the source composition, but generated details can differ from reality. Building heights are partly estimates. This is an exploration illustration, not surveyed imagery or an address-navigation map.
 
 ## Run
 
@@ -36,7 +20,7 @@ This is an approximate, photo-textured **2.5D reconstruction**. Footprints come 
 npm start
 ```
 
-Open **http://localhost:5173**. Serving the committed application requires no package installation or API key. Third-party imagery is streamed from the public World Imagery service. Alternatively:
+Open **http://localhost:5173**. The committed application needs no dependency installation or build step to serve. Alternatively:
 
 ```sh
 python3 -m http.server 5173 --directory dist
@@ -44,58 +28,44 @@ python3 -m http.server 5173 --directory dist
 
 ## Controls
 
-- Drag to move; scroll, double-click, pinch, or use **+ / −** to zoom.
-- In 3D, right-drag or Ctrl-drag to rotate and tilt; use the north button to reset bearing.
-- Settings: **Uydu / 3D**, camera pitch, day/evening, markers, neighborhood names, and quality.
+- Drag to pan; scroll, double-click, pinch, or use **+ / −** to zoom.
 - Search Turkish names with or without accents: `uc serefeli`, `karaagac`.
-- Click a landmark thumbnail or marker to open its details.
+- Select a landmark thumbnail or marker to open its description.
 - Click the minimap to move across the city.
-- Share copies the selected place or camera position, zoom, pitch, and bearing.
+- Settings: natural/dark tone, place markers, neighborhood labels, and image detail.
+- Share copies the selected place or current fixed-angle camera position.
 - Keyboard: arrows move, Shift + arrows move farther, + / − zoom, R resets, / searches, Escape closes panels.
-- Reduced-motion preferences are respected.
+- Reduced-motion preferences are respected. Zoom is capped at the useful detail range of the illustrations.
 
-## Geometry and performance
+## Data and credits
 
-The source database contains **16,563 building footprints**: 2,904 OSM footprints and 13,659 additional Microsoft footprints after overlap filtering. The compiler replaces overlapping landmark geometry with three approximate mosque models, producing 16,559 model entries across 611 spatial chunks.
+The source database contains **16,563 building footprints**: 2,904 from OpenStreetMap and 13,659 additional Microsoft footprints after overlap filtering. Coverage is the urban center, Sarayiçi, Yeniimaret, and Karaağaç: **26.511–26.595° E, 41.646–41.700° N**.
 
-Buildings are triangulated and quantized offline into a **1.83 MB gzip** buffer (8.50 MB decompressed, 708,630 vertices). The browser only uploads nearby chunks to the GPU: up to 28 on desktop, 16 on mobile, or 12 at low quality. At most four chunk texture jobs and six imagery requests run concurrently. Uploads are limited to two chunks per frame. No geometry triangulation runs during interaction, and the custom layer does not request animation frames while idle.
+- **© OpenStreetMap contributors**, ODbL 1.0; snapshot 2026-10-31.
+- **Microsoft GlobalMLBuildingFootprints**, CDLA Permissive 2.0; snapshot 2026-08-13.
+- Original scene rendering, illustrated image generation, and interface prepared for this project.
 
-MapLibre also streams the visible ground imagery. The 2D fallback moves tiled images with a compositor transform and performs no building rendering. Device performance and network speed still affect responsiveness. No FPS claim is made.
-
-## Data and imagery
-
-Building coverage: **26.511–26.595° E, 41.646–41.700° N**, covering the urban center, Sarayiçi, Yeniimaret, and Karaağaç.
-
-- Building footprints: **© OpenStreetMap contributors**, ODbL 1.0; snapshot 2026-10-31.
-- Additional footprints: **Microsoft GlobalMLBuildingFootprints**, CDLA Permissive 2.0; snapshot 2026-08-13.
-- Live imagery: **Source: Esri, Vantor, Earthstar Geographics, and the GIS User Community**. See the [World Imagery item and applicable terms](https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9).
-- MapLibre GL JS 6.16.0: BSD 3-Clause, license included in `dist/vendor/maplibre/LICENSE.txt`.
-
-The source database and compiled geometry are distributed under ODbL 1.0 with the Microsoft notice and license retained. **Satellite imagery is not bundled or licensed by this repository**; it is fetched live and remains subject to the provider's terms. Do not use this repository as permission to export, bulk download, or redistribute the imagery. The application has no offline imagery cache. Provider availability and terms may change. See [data provenance](dist/data/README.md).
-
-No reference-site imagery or code was copied. The older illustrative WebP pyramid remains in `dist/atlas/` as a v2 archive and is not loaded by the current application.
+The combined source database retains ODbL 1.0 and the Microsoft notice/license. The map images retain their source attribution. No imagery from the reference sites, Google, or Esri is included. See [data provenance](dist/data/README.md) and [illustration prompts and method](docs/illustration-prompts.md).
 
 ## Rebuild
 
 ```sh
 npm install
-npm run scene3d
+npm run atlas
 npm run pages
 npm run check
 ```
 
-`earcut` triangulates footprints during the offline build. MapLibre's published runtime modules and stylesheet are already vendored. To refresh data, run `python3 scripts/prepare-data.py`, then `python3 scripts/import-microsoft-buildings.py`, and rebuild the scene. The original v2 renderer is retained as `npm run atlas`.
+`npm run atlas` packages the committed source illustrations into the tile atlas; it makes no network requests. The packaging process reuses one tile-sized canvas and does not allocate a full-city raster. `@napi-rs/canvas` is only an offline build dependency.
 
-## Validation and limits
+`npm run guides` recreates the open-data composition guides under `tmp/illustration-guides/`. Changing the source geometry requires redrawing/reviewing the corresponding illustrations before rebuilding the atlas. The committed region images keep ordinary rebuilds reproducible.
 
-Thirty-two tests cover viewport sizing, loading deadlines, cancellation, retry, provider failover, local recovery assets, and source bounds, Turkish search normalization, geographic projections, satellite tile coordinates and preview bounds, matrix precision, chunk offsets, every mesh vertex's height/material/normal, vendored dependencies, HTML resources, and the archived v2 pyramid. Syntax checks cover the application and both 3D modules.
+## Verification
 
-The independent satellite viewer was checked in Chrome on desktop and a **390 × 844** mobile viewport, including search, details, zoom, imagery loading, and recovery after a failed 3D attempt. An injected missing-image URL also verified that complete remote imagery failure displays the local city map. The GLSL ES 300 shaders compiled and linked successfully using Mesa EGL / llvmpipe; the optional check is `python3 scripts/qa/verify-shaders.py` with `moderngl==5.12.0` installed.
-
-**End-to-end 3D visual appearance and GPU frame rate could not be verified in the cloud browser because WebGL is disabled there.** Offscreen shader compilation is not a substitute for browser GPU testing. A WebGL 2 capable browser is needed to assess the tilted model view. [Performance notes and previous measurements](docs/performance.md).
+Tests cover geographic projections, Turkish search, data bounds, source attribution, pointer-anchored zoom, tile selection and resolution, every published tile and thumbnail, illustration bounds, detailed coverage of all landmarks, and both HTML entry points. Desktop/mobile navigation and loading are checked in Chrome with WebGL unavailable. [Performance and verification notes](docs/performance.md).
 
 ## GitHub Pages
 
-Publication is configured as **Deploy from a branch → `main` → `/ (root)`**. The generated root `index.html` loads assets from `dist/`; `.nojekyll` bypasses Jekyll. Changes on `main` publish automatically. Run `npm run pages` after editing `dist/index.html`.
+Configured as **Deploy from a branch → `main` → `/ (root)`**. The generated root `index.html` loads assets from `dist/`; `.nojekyll` bypasses Jekyll. Run `npm run pages` after editing `dist/index.html`. Updates pushed to `main` publish automatically.
 
-`dist/` can also be served directly by a static host. Keep the vendored modules, `scene3d/`, and source attribution files with the application. There is no backend, analytics, login, or geolocation request.
+`dist/` is also a complete static-hosting folder. Source region illustrations are in `assets/illustrations/`; the deployed application loads only the packaged files in `dist/atlas-v4/`.

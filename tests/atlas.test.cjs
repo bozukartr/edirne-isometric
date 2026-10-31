@@ -43,7 +43,7 @@ test('HTML resource references exist and no QA harness is in the app',()=>{
 });
 test('point-in-polygon handles inside and outside cases',()=>{const p=[[0,0],[10,0],[10,10],[0,10]];assert.ok(M.inPolygon(5,5,p));assert.ok(!M.inPolygon(-1,5,p));assert.ok(!M.inPolygon(50,50,p));});
 const V=require('../dist/viewer-core.js');
-const manifest=JSON.parse(fs.readFileSync(path.join(root,'dist/atlas/manifest.json'),'utf8'));
+const manifest=JSON.parse(fs.readFileSync(path.join(root,'dist/atlas-v4/manifest.json'),'utf8'));
 test('tile detail increases with zoom and respects low-bandwidth mode',()=>{
  const levels=manifest.levels;
  for(let z=.1;z<=3;z+=.1){assert.ok(V.levelFor(levels,z,2,'low')<=V.levelFor(levels,z,2,'high'));assert.ok(V.levelFor(levels,z,2)>=0);assert.ok(V.levelFor(levels,z,2)<levels.length);}
@@ -60,9 +60,9 @@ test('every published pyramid tile and landmark thumbnail exists',()=>{
  assert.equal(manifest.meta.buildings,map.meta.buildings);
  assert.equal(manifest.meta.microsoftBuildings+manifest.meta.osmBuildings,manifest.meta.buildings);
  for(let l=0;l<manifest.levels.length;l++){const level=manifest.levels[l];for(let y=0;y<level.rows;y++)for(let x=0;x<level.cols;x++){
-  const bytes=fs.readFileSync(path.join(root,`dist/atlas/${l}/${x}-${y}.webp`));assert.equal(bytes.toString('ascii',0,4),'RIFF');assert.equal(bytes.toString('ascii',8,12),'WEBP');
+  const bytes=fs.readFileSync(path.join(root,`dist/atlas-v4/${l}/${x}-${y}.webp`));assert.equal(bytes.toString('ascii',0,4),'RIFF');assert.equal(bytes.toString('ascii',8,12),'WEBP');
  }}
- for(const p of places)assert.ok(fs.existsSync(path.join(root,`dist/atlas/thumbs/${p.id}.webp`)));
+ for(const p of places)assert.ok(fs.existsSync(path.join(root,`dist/atlas-v4/thumbs/${p.id}.webp`)));
 });
 test('published root entry resolves the same application assets as dist',()=>{
  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');

@@ -4,7 +4,7 @@ An interactive, isometric atlas of **Edirne / Merkez**, built with plain HTML, C
 
 Explore the historic center, Tunca and Meriç river corridors, Sarayiçi, Yeniimaret, and Karaağaç.
 
-[Open the private live atlas](https://edirne-isometric-atlas.burakgol.chatgpt.site) · Sign in with the owner’s ChatGPT account.
+[Open the public live atlas](https://bozukartr.github.io/edirne-isometric/)
 
 ![Edirne isometric atlas preview](docs/preview.jpg)
 
@@ -90,7 +90,9 @@ Tests cover coordinate round trips, isometric inversion, pointer-anchored zoom a
 
 Upload the contents of **`dist/`** to any static host. All resource URLs are relative, so repository subpaths work. Google Fonts is optional; local serif and sans-serif fallbacks keep the atlas usable if the font CDN is unavailable. The map itself never requests third-party tiles.
 
-A private hosted preview is provided with the project. To publish through GitHub Pages instead, configure your preferred static deployment to publish `dist/`; no bundler or framework adapter is needed.
+GitHub Pages publishes directly from **`main` → `/ (root)`** using **Deploy from a branch**. The repository-root `index.html` loads the same application assets from `dist/`. `.nojekyll` disables the Jekyll build step.
+
+After changing `dist/index.html`, run `npm run pages` to refresh the root entry before committing. Pushes to `main` automatically publish updates. No separate deployment branch or custom Actions workflow is required.
 
 ## Architecture
 

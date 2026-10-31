@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6f3e9">
+  <meta name="description" content="Explore Edirne from a new perspective. An interactive isometric city atlas of its mosques, bridges, rivers, and neighborhoods.">
+  <title>Edirne — A city between two rivers</title>
+  <link rel="icon" href="./dist/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./dist/styles.css">
+  <script src="./dist/data/map.js" defer></script>
+  <script src="./dist/data/places.js" defer></script>
+  <script src="./dist/geometry.js" defer></script>
+  <script src="./dist/app.js" defer></script>
+</head>
+<body>
+  <svg class="icon-defs" aria-hidden="true"><defs>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.4"/><path d="m16 16 4.5 4.5"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M19 10c0 5-7 10-7 10S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.2"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 10 6-10 6L2 9Zm-9 11 9 5 9-5M3 18l9 5 9-5"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4 9a8 8 0 1 1 0 7M4 3v6h6"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 1v3m0 16v3M1 12h3m16 0h3M4 4l2 2m12 12 2 2M4 20l2-2M18 6l2-2"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 15.5A8.5 8.5 0 0 1 8.5 4a8.5 8.5 0 1 0 11.5 11.5Z"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-2 2M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l2-2"/></symbol>
+    <symbol id="i-expand" viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></symbol>
+    <symbol id="i-walk" viewBox="0 0 24 24"><circle cx="14" cy="4" r="2"/><path d="m7 12 3-4h4l3 5h4m-10-3-2 6-5 5m8-6 5 6M7 12H3"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-11v2"/></symbol>
+  </defs></svg>
+
+  <header class="topbar">
+    <a class="wordmark" href="./" aria-label="Edirne Atlas home">edirne<span>↗</span></a>
+    <div class="edition"><span class="edition-dot"></span> THE ISOMETRIC ATLAS <span class="edition-divider">/</span><span class="edition-location"> MERKEZ, TÜRKİYE</span></div>
+    <button class="about-button" id="about-open">About the map <span>↗</span></button>
+  </header>
+
+  <main id="atlas" aria-label="Interactive isometric map of Edirne">
+    <canvas id="map" tabindex="0" aria-label="Isometric map. Drag to explore, scroll to zoom. Arrow keys pan, plus and minus zoom. Use the places list to explore landmarks."></canvas>
+    <div class="map-vignette" aria-hidden="true"></div>
+    <div id="map-labels" aria-hidden="true"></div>
+    <div id="pins" aria-label="Map landmarks"></div>
+    <div class="map-tooltip" id="map-tooltip" role="status"></div>
+
+    <aside class="explorer" id="explorer" aria-label="Explore Edirne">
+      <div class="intro">
+        <div class="eyebrow"><span class="tiny-cross">✳</span> A DIFFERENT PERSPECTIVE</div>
+        <h1>A city between<br>two rivers<span>.</span></h1>
+        <p>Wander the rooftops. Follow the rivers.<br>Find a little piece of Edirne.</p>
+      </div>
+      <div class="directory">
+        <label class="search-box"><svg class="icon"><use href="#i-search"/></svg><input id="search" type="search" placeholder="Find a place in Edirne…" autocomplete="off" aria-label="Search places"><kbd>/</kbd></label>
+        <div class="category-tabs" aria-label="Filter places">
+          <button class="category active" data-category="all" aria-pressed="true">All places</button>
+          <button class="category" data-category="heritage" aria-pressed="false">Heritage</button>
+          <button class="category" data-category="bridges" aria-pressed="false">Bridges</button>
+          <button class="category" data-category="nature" aria-pressed="false">Nature</button>
+        </div>
+        <div class="list-heading"><span>PLACES TO DISCOVER</span><span id="place-count">12</span></div>
+        <div id="place-list" class="place-list"></div>
+      </div>
+      <button class="tour-button" id="tour"><span class="tour-icon"><svg class="icon"><use href="#i-walk"/></svg></span><span>Take the scenic route<small>A little tour of the city</small></span><svg class="icon"><use href="#i-arrow"/></svg></button>
+    </aside>
+
+    <div class="map-heading"><span class="map-heading-line"></span> EDİRNE / 01 <small>OLD TOWN & BEYOND</small></div>
+    <div class="compass" aria-label="Map orientation"><span>N</span><svg viewBox="0 0 60 60" aria-hidden="true"><path d="m30 7 10 32-10-5-10 5Z" fill="currentColor"/><path d="m30 53 10-14-10 5-10-5Z" fill="currentColor" opacity=".25"/></svg><span id="bearing">↗</span></div>
+
+    <div class="view-options">
+      <button id="theme" class="round-button" aria-label="Switch to evening light" title="Switch light"><svg class="icon"><use href="#i-sun"/></svg></button>
+      <button id="layers" class="round-button" aria-label="Map layers" aria-expanded="false" title="Map layers"><svg class="icon"><use href="#i-layers"/></svg></button>
+    </div>
+    <div class="layers-panel" id="layers-panel" hidden><strong>Make it your map</strong><label><span>Landmark pins</span><input id="toggle-pins" type="checkbox" checked></label><label><span>Place names</span><input id="toggle-labels" type="checkbox" checked></label><label><span>Buildings in 3D</span><input id="toggle-3d" type="checkbox" checked></label></div>
+
+    <section class="detail-card" id="detail" aria-label="Selected place" hidden>
+      <div class="detail-art" id="detail-art"><span id="detail-number">01</span><button id="detail-close" class="detail-close" aria-label="Close place details"><svg class="icon"><use href="#i-close"/></svg></button><svg id="detail-illustration" viewBox="0 0 300 145" aria-hidden="true"></svg></div>
+      <div class="detail-body"><div class="eyebrow" id="detail-category"></div><h2 id="detail-title"></h2><p id="detail-description"></p><div class="detail-meta"><span id="detail-date"></span><span id="detail-neighborhood"></span></div><div class="detail-actions"><a id="detail-osm" target="_blank" rel="noopener noreferrer">View on OpenStreetMap <span>↗</span></a><button id="share-place" aria-label="Copy link to this place"><svg class="icon"><use href="#i-link"/></svg></button></div></div>
+    </section>
+
+    <div class="map-controls"><button id="zoom-in" aria-label="Zoom in" title="Zoom in (+)">+</button><span id="zoom-level">100%</span><button id="zoom-out" aria-label="Zoom out" title="Zoom out (−)">−</button><span class="control-divider"></span><button id="reset" aria-label="Reset map" title="Reset view (R)"><svg class="icon"><use href="#i-reset"/></svg></button><button id="fullscreen" aria-label="Enter fullscreen" title="Fullscreen"><svg class="icon"><use href="#i-expand"/></svg></button></div>
+    <div class="interaction-hint" id="hint"><span class="hint-drag">↔</span> Drag to explore <span>·</span> Scroll to zoom</div>
+    <button class="mobile-explore" id="mobile-explore"><svg class="icon"><use href="#i-search"/></svg> Explore Edirne <span>↑</span></button>
+    <div class="scale"><div id="scale-bar"></div><span id="scale-text">200 m</span></div>
+    <div class="attribution"><span class="atlas-credit">MADE FOR THE CURIOUS</span><span class="credit-divider">·</span><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors</a><button id="data-info" aria-label="About map data"><svg class="icon"><use href="#i-info"/></svg></button></div>
+    <div class="loading" id="loading"><span class="loading-mark">e.</span><span>Finding a new perspective…</span></div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </main>
+
+  <dialog id="about-dialog" aria-labelledby="about-title"><button id="about-close" class="dialog-close" aria-label="Close about dialog"><svg class="icon"><use href="#i-close"/></svg></button><span class="eyebrow">A SMALL CITY. A NEW PERSPECTIVE.</span><h2 id="about-title">Hello, Edirne.</h2><p>A little atlas for getting wonderfully lost. Explore the historic center, cross the Meriç and Tunca, and follow the city all the way to Karaağaç.</p><h3>The map behind the rooftops</h3><p id="data-description"></p><p>Landmark models are artistic interpretations. Building heights are estimated where height data is unavailable. This is an exploration map, rather than a navigation service.</p><h3>Inspired by a different point of view</h3><p>With a nod to <a href="https://isometric.nyc" target="_blank" rel="noopener noreferrer">Isometric NYC ↗</a> and <a href="https://isometricistanbul.com" target="_blank" rel="noopener noreferrer">Isometric Istanbul ↗</a>. All code and landmark illustrations in this atlas are original.</p><div class="keyboard-guide"><span><kbd>↑ ↓ ← →</kbd> Pan</span><span><kbd>+ −</kbd> Zoom</span><span><kbd>R</kbd> Reset</span><span><kbd>/</kbd> Search</span><span><kbd>Esc</kbd> Close</span></div><div class="about-footer"><span>HTML · CSS · JAVASCRIPT</span><a href="./dist/data/README.md" target="_blank">Data & credits ↗</a></div></dialog>
+</body>
+</html>
